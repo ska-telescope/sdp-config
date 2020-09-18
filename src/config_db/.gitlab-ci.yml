@@ -1,0 +1,44 @@
+# GitLab CI jobs for SDP configuration database library
+
+.env: &env
+  variables:
+    BUILD_PATH: src/config_db
+
+
+# ============================================================================
+# Build Python package
+# ============================================================================
+
+# Executed on a non-master commit
+
+build:ska-sdp-config_dev:
+  extends: .build_python_dev
+  <<: *env
+
+# Executed on a master commit
+
+build:ska-sdp-config:
+  extends: .build_python_release
+  <<: *env
+
+# ============================================================================
+# Test Python package
+# ============================================================================
+
+test:ska-sdp-config:
+  extends:
+    - .test_python
+    - .test_with_etcd
+  variables:
+    BUILD_PATH: src/config_db
+    SDP_TEST_HOST: etcd
+
+# ============================================================================
+# Publish Python package (master only)
+# ============================================================================
+
+publish:ska-sdp-config:
+  extends: .publish_python
+  dependencies:
+    - build:ska-sdp-config
+  <<: *env
