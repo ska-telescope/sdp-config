@@ -1,11 +1,9 @@
 
-Configuration Schema
-====================
+# Configuration Schema
 
 This is the schema of the configuration database, effectively the control plane of the SDP.
 
-Design Principles
------------------
+## Design Principles
 
 - Uses a key-value store
 - Uses watches on a key or range of keys to monitor for any updates
@@ -13,8 +11,7 @@ Design Principles
 - We will likely want to define schemas and validation eventually, but
   for the moment this will be by example
 
-Scheduling Block
-----------------
+## Scheduling Block
 
 Path `/sb/[sbi_id]`
 
@@ -43,8 +40,7 @@ set to the observation state (`obsState`) of the subarray. When the scheduling
 block is ended, `status` is set to `FINISHED`.
 
 
-Processing Block
-----------------
+## Processing Block
 
 Path: `/pb/[pb_id]`
 

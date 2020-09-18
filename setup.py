@@ -6,7 +6,7 @@ with open('README.md', 'r') as file:
     LONG_DESCRIPTION = file.read()
 
 version = {}
-with open('ska_sdp_config/version.py', 'r') as file:
+with open('src/ska_sdp_config/version.py', 'r') as file:
     exec(file.read(), version)
 
 setuptools.setup(
@@ -17,8 +17,7 @@ setuptools.setup(
     license='License :: OSI Approved :: BSD License',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    url='http://gitlab.com/ska-telescope/sdp-prototype/src/'
-        'config_db',
+    url='http://gitlab.com/ska-telescope/sdp-config/',
     install_requires=[
         'etcd3-py', 'docopt-ng', 'pyyaml'
     ],
@@ -33,11 +32,8 @@ setuptools.setup(
         'pytest-pylint',
         'pytest-timeout'
     ],
-    packages=[
-        'ska_sdp_config',
-        'ska_sdp_config/backend',
-        'ska_sdp_config/entity'
-    ],
+    package_dir={'': 'src'},
+    packages=setuptools.find_packages('src'),
     scripts=['scripts/sdpcfg'],
     classifiers=[
         'Topic :: Database :: Front-Ends',
