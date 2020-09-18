@@ -1,1 +1,1 @@
-.. mdinclude:: ../../../src/config_db/SCHEMA.md
+.. mdinclude:: ../../../SCHEMA.md

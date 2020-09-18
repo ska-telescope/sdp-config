@@ -1,1 +1,1 @@
-.. mdinclude:: ../../../src/config_db/README.md
+.. mdinclude:: ../../../README.md
