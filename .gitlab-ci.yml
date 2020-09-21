@@ -1,44 +1,138 @@
-# GitLab CI jobs for SDP configuration database library
+variables:
+  GIT_STRATEGY: clone
 
-.env: &env
-  variables:
-    BUILD_PATH: src/config_db
+workflow:
+  rules:
+    - if: $CI_MERGE_REQUEST_ID
+    - if: $CI_COMMIT_BRANCH
 
+stages:
+  - test
+  - lint
+  - build
+  - publish
+
+image: python:latest
+
+# ============================================================================
+# Test and lint Python package
+# ============================================================================
+
+test:
+  stage: test
+  services:
+    - name: quay.io/coreos/etcd:latest
+      alias: etcd
+      command:
+        - /usr/local/bin/etcd
+        - "--advertise-client-urls=http://0.0.0.0:2379"
+        - "--listen-client-urls=http://0.0.0.0:2379"
+        - "--initial-advertise-peer-urls=http://0.0.0.0:2380"
+        - "--listen-peer-urls=http://0.0.0.0:2380"
+        - "--initial-cluster=default=http://0.0.0.0:2380"
+  before_script:
+    - pip3 install -r requirements.txt -r requirements-test.txt
+  script:
+    - python3 setup.py test
+  after_script:
+    - mkdir -p build/reports
+    - mv code-coverage.xml unit-tests.xml build/reports
+  artifacts:
+    paths:
+      - build
+    expire_in: 1 week
+    when: always
+
+lint:
+  stage: lint
+  dependencies:
+    - test
+  before_script:
+    - pip3 install -r requirements.txt -r requirements-test.txt
+  script:
+    - pylint --exit-zero --output-format=parseable src/ska_sdp_config
+    - pylint --exit-zero --output-format=pylint2junit.JunitReporter src/ska_sdp_config > linting.xml
+  after_script:
+    - mkdir -p build/reports
+    - mv linting.xml build/reports
+  artifacts:
+    paths:
+      - build
+    expire_in: 1 week
+    when: always
 
 # ============================================================================
 # Build Python package
 # ============================================================================
 
+.build_python:
+  stage: build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 week
+
 # Executed on a non-master commit
 
-build:ska-sdp-config_dev:
-  extends: .build_python_dev
-  <<: *env
+build_dev:
+  extends: .build_python
+  except: [master]
+  script:
+    - python3 setup.py egg_info -b+dev.$CI_COMMIT_SHORT_SHA sdist bdist_wheel
 
 # Executed on a master commit
 
-build:ska-sdp-config:
-  extends: .build_python_release
-  <<: *env
+build_release:
+  extends: .build_python
+  only: [master]
+  script:
+    - python3 setup.py sdist bdist_wheel
 
 # ============================================================================
-# Test Python package
+# Publish Python package
 # ============================================================================
 
-test:ska-sdp-config:
-  extends:
-    - .test_python
-    - .test_with_etcd
-  variables:
-    BUILD_PATH: src/config_db
-    SDP_TEST_HOST: etcd
+.publish_python:
+  stage: publish
+  before_script:
+    - pip install twine
 
-# ============================================================================
-# Publish Python package (master only)
-# ============================================================================
+# Publish to GitLab
 
-publish:ska-sdp-config:
+publish_dev:
   extends: .publish_python
-  dependencies:
-    - build:ska-sdp-config
-  <<: *env
+  when: manual
+  variables:
+    TWINE_USERNAME: gitlab-ci-token
+    TWINE_PASSWORD: ${CI_JOB_TOKEN}
+  script:
+    - twine upload --repository-url https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/pypi dist/* || true
+
+# Publish to EngageSKA and PyPI on a master commit
+
+publish_release:
+  extends: .publish_python
+  only: [master]
+  when: manual
+  variables:
+    TWINE_USERNAME: $TWINE_USERNAME
+    TWINE_PASSWORD: $TWINE_PASSWORD
+  script:
+    - twine upload --repository-url $PYPI_REPOSITORY_URL dist/* || true
+    - twine upload --skip-existing -u $PYPI_USER -p $PYPI_PASS dist/* || true
+
+# ============================================================================
+# CI metrics
+# ============================================================================
+
+create_ci_metrics:
+  stage: .post
+  when: always
+  script:
+    # Gitlab CI badges creation: START
+    - curl -s https://gitlab.com/ska-telescope/ci-metrics-utilities/raw/master/scripts/ci-badges-func.sh | sh
+    # Gitlab CI badges creation: END
+  artifacts:
+    paths:
+      - build
+    expire_in: 1 week
