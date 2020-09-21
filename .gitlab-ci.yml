@@ -30,6 +30,8 @@ test:
         - "--initial-advertise-peer-urls=http://0.0.0.0:2380"
         - "--listen-peer-urls=http://0.0.0.0:2380"
         - "--initial-cluster=default=http://0.0.0.0:2380"
+  variables:
+    SDP_TEST_HOST: etcd
   before_script:
     - pip3 install -r requirements.txt -r requirements-test.txt
   script:
@@ -99,7 +101,7 @@ build_release:
 
 # Publish to GitLab
 
-publish_dev:
+publish_gitlab:
   extends: .publish_python
   when: manual
   variables:
