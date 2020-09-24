@@ -36,6 +36,9 @@ test:
     - pip3 install -r requirements.txt -r requirements-test.txt
   script:
     - 'curl --location --output artifacts.zip --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://gitlab.com/api/v4/projects/21141276/jobs/artifacts/master/download?job=build_release"'
+    - ls
+    - unzip -l artifacts.zip
+    - echo $BKM_TEST
     - python3 setup.py test
   after_script:
     - mkdir -p build/reports
