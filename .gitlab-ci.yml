@@ -95,37 +95,19 @@ build_release:
     - python3 setup.py sdist bdist_wheel
 
 # ============================================================================
-# Publish Python package
+# Publish Python package (master only)
 # ============================================================================
 
-.publish_python:
+publish:
   stage: publish
-  before_script:
-    - pip install twine
-
-# Publish to GitLab
-
-publish_gitlab:
-  extends: .publish_python
-  when: manual
-  variables:
-    TWINE_USERNAME: gitlab-ci-token
-    TWINE_PASSWORD: ${CI_JOB_TOKEN}
-  script:
-    - twine upload --repository-url https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/pypi dist/* || true
-
-# Publish to EngageSKA and PyPI on a master commit
-
-publish_release:
-  extends: .publish_python
   only: [master]
-  when: manual
   variables:
     TWINE_USERNAME: $TWINE_USERNAME
     TWINE_PASSWORD: $TWINE_PASSWORD
+  before_script:
+    - pip install twine
   script:
     - twine upload --repository-url $PYPI_REPOSITORY_URL dist/* || true
-    - twine upload --skip-existing -u $PYPI_USER -p $PYPI_PASS dist/* || true
 
 # ============================================================================
 # CI metrics
