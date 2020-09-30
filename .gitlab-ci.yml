@@ -95,13 +95,13 @@ build_release:
     - python3 setup.py sdist bdist_wheel
     
 trigger_lmc:
-  stage:build
+  stage: build
   trigger:
       project: ska-telescope/sdp-lmc
       branch: SIM-594/Implement_dependencies
       
  trigger_console:
-  stage:build
+  stage:  build
   trigger:
       project: ska-telescope/sdp-console
       branch: SIM-594/Implement_dependencies
