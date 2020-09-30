@@ -93,7 +93,19 @@ build_release:
   only: [master]
   script:
     - python3 setup.py sdist bdist_wheel
-
+    
+trigger_lmc:
+  stage:build
+  trigger:
+      project: ska-telescope/sdp-lmc
+      branch: SIM-594/Implement_dependencies
+      
+ trigger_console:
+  stage:build
+  trigger:
+      project: ska-telescope/sdp-console
+      branch: SIM-594/Implement_dependencies
+           
 # ============================================================================
 # Publish Python package (master only)
 # ============================================================================
