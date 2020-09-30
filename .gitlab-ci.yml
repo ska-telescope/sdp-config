@@ -99,8 +99,8 @@ trigger_lmc:
   trigger:
       project: ska-telescope/sdp-lmc
       branch: SIM-594/Implement_dependencies
-      
- trigger_console:
+
+trigger_console:
   stage:  build
   trigger:
       project: ska-telescope/sdp-console
