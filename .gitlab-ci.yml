@@ -10,6 +10,7 @@ stages:
   - test
   - lint
   - build
+  - integrate
   - publish
 
 image: python:latest
@@ -100,10 +101,28 @@ trigger_lmc:
       project: ska-telescope/sdp-lmc
       branch: SIM-594/Implement_dependencies
 
+trigger_proccontrol:
+  stage: build
+  trigger:
+      project: ska-telescope/sdp-procontrol
+      branch: SIM-594/Implement_dependencies
+      
+trigger_helmdeploy:
+  stage: build
+  trigger:
+      project: ska-telescope/sdp-helmdeploy
+      branch: SIM-594/Implement_dependencies
+
 trigger_console:
   stage:  build
   trigger:
       project: ska-telescope/sdp-console
+      branch: SIM-594/Implement_dependencies
+
+trigger_integrate:
+  stage: integrate
+  trigger:
+      project: ska-telescope/sdp-integration
       branch: SIM-594/Implement_dependencies
            
 # ============================================================================
