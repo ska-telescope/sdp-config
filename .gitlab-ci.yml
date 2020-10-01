@@ -104,7 +104,7 @@ trigger_lmc:
 trigger_proccontrol:
   stage: build
   trigger:
-      project: ska-telescope/sdp-procontrol
+      project: ska-telescope/sdp-proccontrol
       branch: SIM-594/Implement_dependencies
       
 trigger_helmdeploy:
