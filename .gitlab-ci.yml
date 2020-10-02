@@ -94,36 +94,48 @@ build_release:
   only: [master]
   script:
     - python3 setup.py sdist bdist_wheel
-    
+
+# Trigger builds in downstream repositories
+
+.env: &env
+   variables:
+     UPSTREAM_PIPELINE_ID: $CI_PIPELINE_ID
+     UPSTREAM_REPO_NAME: $CI_PROJECT_NME
+     UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
+
 trigger_lmc:
-  stage: build
+  stage: integration
+  <<: *env
   trigger:
       project: ska-telescope/sdp-lmc
       branch: SIM-594/Implement_dependencies
 
 trigger_proccontrol:
-  stage: build
+  stage: integration
+  <<: *env
   trigger:
       project: ska-telescope/sdp-proccontrol
       branch: SIM-594/Implement_dependencies
       
 trigger_helmdeploy:
-  stage: build
+  stage: integration
+  <<: &env
   trigger:
       project: ska-telescope/sdp-helmdeploy
       branch: SIM-594/Implement_dependencies
 
 trigger_console:
-  stage:  build
+  stage:  integration
+  <<: &env
   trigger:
       project: ska-telescope/sdp-console
       branch: SIM-594/Implement_dependencies
 
-trigger_integrate:
-  stage: integrate
-  trigger:
-      project: ska-telescope/sdp-integration
-      branch: SIM-594/Implement_dependencies
+#trigger_integrate:
+#  stage: integrate
+# trigger:
+#     project: ska-telescope/sdp-integration
+#     branch: SIM-594/Implement_dependencies
            
 # ============================================================================
 # Publish Python package (master only)
