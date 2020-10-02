@@ -104,29 +104,29 @@ build_release:
      UPSTREAM_BRANCH_NAME: $CI_COMMIT_REF_NAME
 
 trigger_lmc:
-  stage: integration
+  stage: integrate
   <<: *env
   trigger:
       project: ska-telescope/sdp-lmc
       branch: SIM-594/Implement_dependencies
 
 trigger_proccontrol:
-  stage: integration
+  stage: integrate
   <<: *env
   trigger:
       project: ska-telescope/sdp-proccontrol
       branch: SIM-594/Implement_dependencies
       
 trigger_helmdeploy:
-  stage: integration
-  <<: &env
+  stage: integrate
+  <<: *env
   trigger:
       project: ska-telescope/sdp-helmdeploy
       branch: SIM-594/Implement_dependencies
 
 trigger_console:
-  stage:  integration
-  <<: &env
+  stage:  integrate
+  <<: *env
   trigger:
       project: ska-telescope/sdp-console
       branch: SIM-594/Implement_dependencies
