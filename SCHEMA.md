@@ -1,15 +1,8 @@
 
 # Configuration Schema
 
-This is the schema of the configuration database, effectively the control plane of the SDP.
-
-## Design Principles
-
-- Uses a key-value store
-- Uses watches on a key or range of keys to monitor for any updates
-- Objects are represented as JSON
-- We will likely want to define schemas and validation eventually, but
-  for the moment this will be by example
+This is the schema of the configuration database, effectively the control plane
+of the SDP.
 
 ## Scheduling Block
 
@@ -35,8 +28,8 @@ Contents:
 }
 ```
 
-When the scheduling block instance is being executed, the `status` field is
-set to the observation state (`obsState`) of the subarray. When the scheduling
+When the scheduling block instance is being executed, the `status` field is set
+to the observation state (`obsState`) of the subarray. When the scheduling
 block is ended, `status` is set to `FINISHED`.
 
 

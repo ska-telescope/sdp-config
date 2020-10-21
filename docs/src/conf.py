@@ -18,20 +18,14 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 
-# autodoc_mock_imports = ['PyTango', 'tango', 'tango.server', 'run',
-#                         'DeviceMeta', 'command']
 autodoc_mock_imports = [
-    'PyTango',
-    'tango',
-    'skabase',
     'etcd3',
-    'jsonschema',
-    'kubernetes'
+    'docopt-ng',
+    'pyyaml',
 ]
 
 import os
 import sys
-import sphinx_rtd_theme
 
 
 # -- Path set up --------------------------------------------------------------
@@ -42,24 +36,24 @@ sys.path.insert(0, os.path.abspath(
 
 
 def setup(app):
-    app.add_stylesheet('css/custom.css')
-    app.add_javascript('js/github.js')
+    app.add_css_file('css/custom.css')
+    app.add_js_file('js/github.js')
 
 
 # -- Project information -----------------------------------------------------
 project = 'developer.skatelescope.org'
-copyright = '2019-2020, ORCA Team, Sim Team'
-author = 'Sim Team'
+copyright = '2019-2020, SKA SDP Developers'
+author = 'SKA SDP Developers'
 
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
-#
+
 # The short X.Y.Z version.
-version = '0.1.1'
+version = '0.0.11'
 # The full version, including alpha/beta/rc pre-release tags.
-release = '0.1.1-beta'
+release = '0.0.11'
 
 # -- General configuration ------------------------------------------------
 
@@ -80,7 +74,7 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'm2r'
+    'm2r2'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

@@ -1,16 +1,21 @@
-SDP Configuration
-=================
+SDP Configuration Library
+=========================
 
-This repository contains a set of packages for deploying a minimal SDP
-system capable of configuring and executing workflows.
+This repository contains the library for accessing SKA SDP configuration
+information. It provides ways for SDP controller and processing components to
+discover and manipulate the intended state of the system.
+
+At the moment this is implemented on top of ``etcd``, a highly-available
+database. This library provides primitives for atomic queries and updates to
+the stored configuration information.
 
 .. toctree::
   :maxdepth: 1
-  :caption: Configuration
 
-  configuration/config_db
-  configuration/config_schema
-  configuration/config_api
+  installation
+  design
+  schema
+  api
 
 
 Indices and tables
