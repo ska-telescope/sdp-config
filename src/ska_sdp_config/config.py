@@ -40,7 +40,7 @@ class Config:
         self.pb_path = global_prefix + '/pb/'
         self.sb_path = global_prefix + '/sb/'
         self.subarray_path = global_prefix + '/subarray/'
-        self.master_path = global_prefix + '/master/'
+        self.master_path = global_prefix + '/master'
         self.deploy_path = global_prefix + '/deploy/'
 
         # Lease associated with client
