@@ -15,9 +15,9 @@ PREFIX = "/__test_subarray"
 def cfg():
     host = os.getenv('SDP_TEST_HOST', '127.0.0.1')
     with ska_sdp_config.Config(global_prefix=PREFIX, host=host) as cfg:
-        cfg._backend.delete(PREFIX, must_exist=False, recursive=True)
+        cfg.backend.delete(PREFIX, must_exist=False, recursive=True)
         yield cfg
-        cfg._backend.delete(PREFIX, must_exist=False, recursive=True)
+        cfg.backend.delete(PREFIX, must_exist=False, recursive=True)
 
 
 def test_subarray_list(cfg):
