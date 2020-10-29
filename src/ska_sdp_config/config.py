@@ -40,6 +40,7 @@ class Config:
         self.pb_path = global_prefix + '/pb/'
         self.sb_path = global_prefix + '/sb/'
         self.subarray_path = global_prefix + '/subarray/'
+        self.master_path = global_prefix + '/master'
         self.deploy_path = global_prefix + '/deploy/'
 
         # Lease associated with client
@@ -192,6 +193,7 @@ class Transaction:
         self._pb_path = config.pb_path
         self._sb_path = config.sb_path
         self._subarray_path = config.subarray_path
+        self._master_path = config.master_path
         self._deploy_path = config.deploy_path
 
     @property
@@ -484,3 +486,28 @@ class Transaction:
         :param state: subarray state
         """
         self._update(self._subarray_path + subarray_id, state)
+
+    def create_master(self, state: dict) -> None :
+        """
+        Create master.
+
+        :param state: master state
+        """
+        self._create(self._master_path, state)
+
+    def update_master(self, state: dict) -> None:
+        """
+        Update master.
+
+        :param state: master state
+        """
+        self._update(self._master_path, state)
+
+    def get_master(self) -> dict:
+        """
+        Get master.
+
+        :returns: master state
+        """
+        state = self._get(self._master_path)
+        return state
