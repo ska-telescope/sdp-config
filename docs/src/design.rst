@@ -138,7 +138,7 @@ transaction object from view:
             yield IncrementModel(txn)
 
     # ...
-    for model in increment_txn():
+    for model in increment_txn(config):
        model.increase('a')
 
 We could wrap this model the same way again to build as many
