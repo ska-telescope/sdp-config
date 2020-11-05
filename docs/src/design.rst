@@ -187,10 +187,10 @@ On the other hand, note that transaction loops might also lead to
 duplicated log lines here, which might be seen as confusing. In this
 case, this is relatively benign and therefore likely acceptable. It
 might be possible to generate log messages at the start and end of
-transactions to make this more visibile.
+transactions to make this more visible.
 
 Another possible approach could be to replicate the transaction
 behaviour: for example, we could make the logging calls to
-`IncrementModel`, which would internall aggregate the logging lines to
+`IncrementModel`, which would internally aggregate the logging lines to
 generate, which `increement_txn` could then emit in one go once the
 transaction actually goes through.
