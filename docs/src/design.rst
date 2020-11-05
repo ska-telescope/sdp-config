@@ -12,8 +12,8 @@ Transaction Basics
 
 The SDP configuration database interface is built around the concept
 of transactions, i.e. blocks of read and write queries to the database
-state that are guaranteed to be executed atomically. I.e. if you write
-code as follows:
+state that are guaranteed to be executed atomically. For example,
+consider this code:
 
 .. code-block:: python
 
@@ -38,7 +38,7 @@ database, but the 'put' call is not performed immediately.
 
 Once the transaction finishes (the end of the `for` loop), the
 transaction commit sends a single request to the database that updates
-all written values **only if** none of the read values having been
+all written values **only if** none of the read values have been
 written in the meantime. If the commit fails, we repeat the
 transaction (that's why it is a loop!) until it succeeds. The
 idea is that this is fairly rare, and repeating the transaction should
@@ -106,8 +106,8 @@ part of the overall state:
             a = txn.get(key)
             # Safety check: Path might have vanished in the meantime!
             if a is None:
-                continue
-            # ... do something that depends solely on existance of "path" ...
+                break
+            # ... do something that depends solely on existance of "key" ...
 
 This can especially be combined with watchers (see below) to keep
 track of many objects without requiring huge transactions.
