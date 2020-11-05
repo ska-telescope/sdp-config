@@ -179,7 +179,7 @@ following might be more typical:
                 LOGGER.debug(f'Found {obj}!')
                 objects_found.append(obj)
 
-In this case, we both could have `objects_found` to have duplicate
+In this case, we clearly could have `objects_found` to have duplicate
 objects - which could be easily fixed by moving the initialisation
 into the `for` loop.
 
