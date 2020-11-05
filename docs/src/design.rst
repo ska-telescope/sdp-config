@@ -179,14 +179,18 @@ following might be more typical:
                 LOGGER.debug(f'Found {obj}!')
                 objects_found.append(obj)
 
-In this case, we clearly could have `objects_found` to have duplicate
-objects - which could be easily fixed by moving the initialisation
-into the `for` loop.
+In this case, `objects_found` might contain duplicate objects if the
+transaction repeats - which could be easily fixed by moving the
+initialisation into the `for` loop.
 
-On the other hand, the log lines would be repeated, which might be
-seen as confusing. In this case, this is relatively benign, but in
-more serious cases a possible approach could be to replicate the
-transaction behaviour: for example, we could make the logging calls to
+On the other hand, note that transaction loops might also lead to
+duplicated log lines here, which might be seen as confusing. In this
+case, this is relatively benign and therefore likely acceptable. It
+might be possible to generate log messages at the start and end of
+transactions to make this more visibile.
+
+Another possible approach could be to replicate the transaction
+behaviour: for example, we could make the logging calls to
 `IncrementModel`, which would internall aggregate the logging lines to
 generate, which `increement_txn` could then emit in one go once the
 transaction actually goes through.
