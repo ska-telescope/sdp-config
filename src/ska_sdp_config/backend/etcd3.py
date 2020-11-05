@@ -39,7 +39,15 @@ class Etcd3Backend:
 
     def txn(self, max_retries=64):
         """Create a new transaction."""
-        return Etcd3Transaction(self, self._client, max_retries)
+        for txn in Etcd3Transaction(self, self._client, max_retries):
+            yield txn
+
+    def watcher(self, timeout=None):
+        """Create a new watcher.
+
+        :param timeout: Timeout for waiting. Watcher will loop after this time.
+        """
+        return Etcd3Watcher(self, self._client, timeout)
 
     def get(self, path, revision=None):
         """
@@ -78,7 +86,7 @@ class Etcd3Backend:
         :param path: Path of key to query, or prefix of keys.
         :param prefix: Watch for keys with given prefix if set
         :param revision: Database revision from which to watch
-        :returns: `Etcd3Watcher` object for watch request
+        :returns: `Etcd3Watch` object for watch request
         """
         # Check/prepare parameters
         if not prefix and path and path[-1] == '/':
@@ -89,7 +97,7 @@ class Etcd3Backend:
         # Set up watcher
         watcher = self._client.Watcher(
             tagged_path, start_revision=rev, prefix=prefix)
-        return Etcd3Watcher(watcher, self)
+        return Etcd3Watch(watcher, self)
 
     def list_keys(self, path, recurse=0, revision=None):
         """
@@ -258,7 +266,7 @@ class Etcd3Revision:
         return "Etcd3Revision({},{})".format(self.revision, self.mod_revision)
 
 
-class Etcd3Watcher:
+class Etcd3Watch:
     """Wrapper for etc3 watch requests.
 
     Entering the watcher using a `with` block yields a queue of `(key,
@@ -596,7 +604,7 @@ class Etcd3Transaction:
     def reset(self, revision=None):
         """Reset the transaction so it can be restarted after commit()."""
         if not self._committed:
-            raise RuntimeError("Called reset on an uncomitted transaction!")
+            raise RuntimeError("Called reset on an uncommitted transaction!")
 
         # Reset
         self._revision = revision
@@ -739,6 +747,11 @@ class Etcd3Transaction:
                 self._got_timeout = block
                 return revision
 
+            # Manual trigger?
+            if rev is None:
+                self._got_timeout = False
+                break
+
             # Check that revision is newer (prevent duplicated updates)
             if rev.revision <= revision.revision:
                 continue
@@ -770,3 +783,108 @@ class Etcd3Transaction:
             # lot of updates in batch
             revision = rev
             block = False
+
+    def trigger_loop(self):
+        """Manually triggers a loop
+
+        Effectively makes loop(True) behave like loop(False), looping
+        immediately. This is useful for interrupting a blocking
+        watch() from a different thread.
+        """
+
+        # Push a magic "cancel" entry
+        self._watch_queue.put((None,None,None))
+
+class Etcd3Watcher:
+    """Watch for database changes by using nested transactions
+
+    """
+
+    def __init__(self, backend, client, timeout=None):
+        """Initialise watcher.
+
+        :param timeout: Maximum time to wait per loop. If None, will
+            wait indefinetely.
+        """
+
+        self._wait_txn = Etcd3Transaction(backend, client)
+
+        self._backend = backend
+        self._client = client
+        self._timeout = timeout
+
+    def set_timeout(self, timeout):
+        """Set a timeout.
+
+        The watch loop will always repeat after waiting for the given
+        amount of time.
+
+        :param timeout: Maximum time to wait per loop. If None, will
+            wait indefinetely.
+        """
+        self._timeout = timeout
+
+    def txn(self, max_retries=64):
+        """Create nested transaction.
+
+        The watcher loop will iterate when any value read by
+        transactions created by this method have changed in the
+        database.
+
+        Note that these transactions otherwise behave exactly as
+        normal transactions: As long as they are internally
+        consistent, they will be commited. This means there is no
+        consistency guarantees between transactions created from the
+        same watcher, i.e. one transaction might read one value from
+        the database while a later one reads another.
+
+        :param max_retries: Maximum number of times the transaction will be
+           tried before giving up.
+        """
+
+        # Make a new transaction.
+        # TODO: Would be more efficient if the different transactions
+        # could share some sort of cache so they don't need to
+        # re-query keys...
+        for txn in Etcd3Transaction(self._backend, self._client, max_retries):
+            yield txn
+
+        # Extract read values from transaction
+        if txn._committed:
+
+            # Take over earliest revision used in a transaction, as we
+            # want to know about any changes from that particular
+            # point forward.
+            if self._wait_txn._revision is None or \
+               self._wait_txn._revision.revision > txn._revision.revision:
+                self._wait_txn._revision = txn._revision
+
+            self._wait_txn._get_queries.update(txn._get_queries)
+            self._wait_txn._list_queries.update(txn._list_queries)
+
+    def __iter__(self):
+        """ Iterate forever, waiting after every interaction for something to change. """
+
+        try:
+            while True:
+                yield self
+
+                # TODO: Move those to this class!
+                self._wait_txn.loop(True, self._timeout)
+                self._wait_txn.watch()
+
+                # Clear current queries
+                self._wait_txn._get_queries = {}
+                self._wait_txn._list_queries = {}
+
+        finally:
+            self._wait_txn.clear_watch()
+
+    def trigger(self):
+        """Manually triggers a loop
+
+        Can be called from a different thread to force a loop, even if
+        the watcher is currently waiting.
+        """
+
+        self._wait_txn.trigger_loop()

@@ -93,7 +93,24 @@ something like:
        else:
            txn.update('a', str(int(a)+1))
 
-This would especially catch case (3) above.
+This would especially catch case (3) above. This sort of approach can
+be useful when we want to make sub-transactions that only depend on a
+part of the overall state:
+
+.. code-block:: python
+
+    for txn in config.txn():
+        keys = txn.list_keys('/as/')
+    for key in keys:
+        for txn in config.txn():
+            a = txn.get(key)
+            # Safety check: Path might have vanished in the meantime!
+            if a is None:
+                continue
+            # ... do something that depends solely on existance of "path" ...
+
+This can especially be combined with watchers (see below) to keep
+track of many objects without requiring huge transactions.
 
 Wrapping transactions
 ---------------------
@@ -194,3 +211,77 @@ behaviour: for example, we could make the logging calls to
 `IncrementModel`, which would internally aggregate the logging lines to
 generate, which `increement_txn` could then emit in one go once the
 transaction actually goes through.
+
+Watchers
+--------
+
+Occasionally we might want to actively track something in the
+configuration. For sake of example, let's say we want to wait for a
+key to appear so we can print it. A simple implementation using polling
+might look like follows:
+
+.. code-block:: python
+
+    while True:
+        for txn in config.txn():
+            line = txn.get('/line_to_print')
+            if line is not None:
+                txn.delete('/line_to_print')
+        if line is not None:
+            print(line)
+        time.sleep(1)
+
+(Note that we are making sure to print outside the transaction loop -
+otherwise lines might get printed multiple times if we were running
+more than one instance of this program in parallel!)
+
+But clearly this is not very good - it re-queries the database every
+second, which adds database load *and* is pretty slow. Instead, we can
+use a watcher loop:
+
+.. code-block:: python
+
+    for watcher in config.watcher():
+        for txn in watcher.txn():
+            line = txn.get('/line_to_print')
+            if line is not None:
+                txn.delete('/line_to_print')
+        if line is not None:
+            print(line)
+
+Note that we are calling `txn` on the `watcher` instead of `config`:
+What is happening here is that the `watcher` object collects keys read
+by the transaction, and only iterates once one of them has been
+written. It is a concept that has a lot in common with the transaction
+loop, except that while the transaction loop only iterates if the
+transaction is inconsistent, the watcher loop *always* iterates.
+
+Note that you can have multiple separate transactions within a watcher
+loop, which however are not guaranteed to be consistent. For example:
+
+.. code-block:: python
+
+    for watcher in config.watcher():
+        for txn in watcher.txn():
+            line = txn.get('/line_to_print')
+        print('A:', line)
+        for txn in watcher.txn():
+            line = txn.get('/line_to_print')
+        print('B:', line)
+
+In this program we might get different results for `A` and
+`B`. However, the watcher *does* guarantee that the loop will iterate
+if any of the read values have been invalidated. So if the line was
+deleted between the two transaction, the following output would be
+generated:
+
+.. code-block::
+
+    A: something
+    B: None
+    A: None
+    B: None
+
+After all, while transaction `B` had a current view of the situation
+the first time around, the view of transaction `A` became out-of-date.
+
