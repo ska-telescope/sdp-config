@@ -114,12 +114,14 @@ class that wraps the transaction itself:
 .. code-block:: python
 
     def IncrementModel(Transaction):
+        def __init__(self, txn):
+            self._txn = txn
         def increase(key):
-            a = txn.get(key)
+            a = self._txn.get(key)
             if a is None:
-                txn.create(key, '1')
+                self._txn.create(key, '1')
             else:
-                txn.update(key, str(int(a)+1))
+                self._txn.update(key, str(int(a)+1))
 
     # ...
     for txn in config.txn():
