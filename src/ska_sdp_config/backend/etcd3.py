@@ -14,13 +14,13 @@ class Etcd3Backend:
     Highly consistent database backend store.
 
     See https://github.com/etcd-io/etcd
+
+    All parameters will be passed on to :py:meth:`etcd3.Client`.
+
     """
 
     def __init__(self, *args, **kw_args):
         """Instantiate the database client.
-
-        All parameters will be passed on
-        to pmeth:`etcd3.Client`.
         """
         self._client = etcd3.Client(*args, **kw_args)
 
@@ -107,8 +107,8 @@ class Etcd3Backend:
            child paths.
         :param recurse: Maximum recursion level to query. If iterable,
            cover exactly the recursion levels specified.
-        :param revision: Database revision for which to list :returns:
-            (sorted key list, revision)
+        :param revision: Database revision for which to list
+        :returns: (sorted key list, revision)
         """
         # Prepare parameters
         path_depth = path.count('/')
@@ -798,12 +798,26 @@ class Etcd3Transaction:
 class Etcd3Watcher:
     """Watch for database changes by using nested transactions
 
+    Use as follows:
+
+    .. code-block:: python
+
+        for watcher in config.watcher():
+            for txn in watcher.txn():
+                # ... do something
+            for txn in watcher.txn():
+                # ... do something else
+
+    At the end of a for loop iteration, the watcher will start
+    watching all values read by transactions started through
+    :py:meth:`txn`, and only repeat the execution of the loop body
+    once one of these values has changed.
     """
 
     def __init__(self, backend, client, timeout=None):
         """Initialise watcher.
 
-        :param timeout: Maximum time to wait per loop. If None, will
+        :param timeout: Maximum time to wait per loop. If ``None``, will
             wait indefinetely.
         """
 
@@ -819,7 +833,7 @@ class Etcd3Watcher:
         The watch loop will always repeat after waiting for the given
         amount of time.
 
-        :param timeout: Maximum time to wait per loop. If None, will
+        :param timeout: Maximum time to wait per loop. If ``None``, will
             wait indefinetely.
         """
         self._timeout = timeout

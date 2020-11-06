@@ -37,9 +37,10 @@ class MemoryBackend:
         Generate a dummy lease object.
 
         This currently has no additional methods.
+
         :param args: arbitrary, not used
         :param kwargs: arbitrary, not used
-        :return: dummy lease object
+        :returns: dummy lease object
         """
         class Lease:
             """Dummy lease class."""
@@ -51,7 +52,7 @@ class MemoryBackend:
 
         :param args: arbitrary, not used
         :param kwargs: arbitrary, not used
-        :return: transaction object
+        :returns: transaction object
         """
         return MemoryTransaction(self)
 
@@ -60,7 +61,7 @@ class MemoryBackend:
         Get the value at the given path.
 
         :param path: to lookup
-        :return: the value
+        :returns: the value
         """
         return self._data.get(_tag_depth(path), None)
 
@@ -84,7 +85,7 @@ class MemoryBackend:
         :param value: of the entry
         :param args: arbitrary, not used
         :param kwargs: arbitrary, not used
-        :return: nothing
+        :returns: nothing
         """
         _op(path, value, self._check_not_exists, self._put)
 
@@ -96,7 +97,7 @@ class MemoryBackend:
         :param value: of the entry
         :param args: arbitrary, not used
         :param kwargs: arbitrary, not used
-        :return: nothing
+        :returns: nothing
         """
         _op(path, value, self._check_exists, self._put)
 
@@ -110,7 +111,7 @@ class MemoryBackend:
         :param must_exist: if true, gives an error if doesn't exist
         :param recursive: Delete children keys at lower levels recursively
         :param max_depth: maximum depth of recursion
-        :return: nothing
+        :returns: nothing
         """
         _check_path(path)
         tag = _tag_depth(path)
@@ -132,8 +133,9 @@ class MemoryBackend:
 
         In common with the etcd backend, the structure is
         "flat" rather than a real hierarchy, even though it looks like one.
+
         :param path:
-        :return: list of keys
+        :returns: list of keys
         """
         # Match only at this depth level. Special case for top level.
         if path == '/':
@@ -151,7 +153,8 @@ class MemoryBackend:
         Close the resource.
 
         This does nothing.
-        :return: nothing
+
+        :returns: nothing
         """
 
     def __repr__(self) -> str:
@@ -179,7 +182,7 @@ class MemoryTransaction:
         """
         Iterate over just this object.
 
-        :return: this object
+        :returns: this object
         """
         yield self
 
@@ -188,7 +191,8 @@ class MemoryTransaction:
         Commit the transaction.
 
         This does nothing.
-        :return: nothing
+
+        :returns: nothing
         """
 
     def get(self, path: str) -> str:
@@ -196,7 +200,7 @@ class MemoryTransaction:
         Get the value at the given path.
 
         :param path: to lookup
-        :return: the value
+        :returns: the value
         """
         return self.backend.get(path)
 
@@ -208,7 +212,7 @@ class MemoryTransaction:
         :param value: of the entry
         :param args: arbitrary, not used
         :param kwargs: arbitrary, not used
-        :return: nothing
+        :returns: nothing
         """
         self.backend.create(path, value)
 
@@ -220,7 +224,7 @@ class MemoryTransaction:
         :param value: of the entry
         :param args: arbitrary, not used
         :param kwargs: arbitrary, not used
-        :return: nothing
+        :returns: nothing
         """
         self.backend.update(path, value)
 
@@ -234,7 +238,7 @@ class MemoryTransaction:
         :param must_exist: if true, gives an error if doesn't exist
         :param recursive: Delete children keys at lower levels recursively
         :param kwargs: arbitrary, not used
-        :return: nothing
+        :returns: nothing
         """
         self.backend.delete(path, must_exist=must_exist, recursive=recursive)
 
@@ -244,8 +248,9 @@ class MemoryTransaction:
 
         In common with the etcd backend, the structure is
         "flat" rather than a real hierarchy, even though it looks like one.
+
         :param path:
-        :return: list of keys
+        :returns: list of keys
         """
         return self.backend.list_keys(path)
 
@@ -254,5 +259,6 @@ class MemoryTransaction:
         Loop the transaction.
 
         This does nothing.
-        :return: nothing
+
+        :returns: nothing
         """
