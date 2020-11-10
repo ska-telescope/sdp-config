@@ -260,6 +260,7 @@ class Etcd3Backend:
         """Close the client connection."""
         self._client.close()
 
+    # pylint: disable=duplicate-code
     def __enter__(self):
         """Use for scoping client connection to a block."""
         return self

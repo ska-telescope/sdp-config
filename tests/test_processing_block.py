@@ -16,14 +16,14 @@ WORKFLOW = {
 }
 
 
-# pylint: disable=W0212
+# pylint: disable=duplicate-code
 @pytest.fixture(scope="session")
 def cfg():
     host = os.getenv('SDP_TEST_HOST', '127.0.0.1')
     with config.Config(global_prefix=PREFIX, host=host) as cfg:
-        cfg._backend.delete(PREFIX, must_exist=False, recursive=True)
+        cfg.backend.delete(PREFIX, must_exist=False, recursive=True)
         yield cfg
-        cfg._backend.delete(PREFIX, must_exist=False, recursive=True)
+        cfg.backend.delete(PREFIX, must_exist=False, recursive=True)
 
 
 def test_simple_pb():
