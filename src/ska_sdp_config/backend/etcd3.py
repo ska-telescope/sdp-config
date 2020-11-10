@@ -2,6 +2,8 @@
 
 import time
 import queue as queue_m
+from deprecated import deprecated
+from typing import Iterable, Callable
 
 import etcd3
 from .common import (
@@ -24,7 +26,7 @@ class Etcd3Backend:
         """
         self._client = etcd3.Client(*args, **kw_args)
 
-    def lease(self, ttl=10):
+    def lease(self, ttl :int=10) -> etcd3.Lease:
         """Generate a new lease.
 
         Once entered can be associated with keys, which will be kept
@@ -37,19 +39,42 @@ class Etcd3Backend:
         """
         return self._client.Lease(ttl=ttl)
 
-    def txn(self, max_retries=64):
-        """Create a new transaction."""
+    def txn(self, max_retries :int=64) -> Iterable["Etcd3Transaction"]:
+        """Create a new transaction.
+
+        Note that this uses an optimistic STM-style implementation,
+        which cannot guarantee that a transaction runs through
+        successfully.  Therefore this function returns an iterator,
+        which loops until the transaction succeeds:
+
+        .. code-block:: python
+
+             for txn in etcd3.txn():
+                 # ... transaction steps ...
+
+        Note that this will in most cases only execute one
+        iteration. If you actually want to loop - for instance because
+        you intend to wait for something to happen in the
+        configuration - use :py:meth:`watcher()` instead.
+
+        :param max_retries: Maximum number of transaction loops
+        :returns: Transaction iterator
+        """
         for txn in Etcd3Transaction(self, self._client, max_retries):
             yield txn
 
-    def watcher(self, timeout=None):
+    def watcher(self, timeout=None) -> Iterable["Etcd3Watcher"]:
         """Create a new watcher.
 
+        Useful for waiting for changes in the configuration. See
+        :py:class:`Etcd3Watcher`.
+
         :param timeout: Timeout for waiting. Watcher will loop after this time.
+
         """
         return Etcd3Watcher(self, self._client, timeout)
 
-    def get(self, path, revision=None):
+    def get(self, path :str, revision :'Etcd3Revision'=None):
         """
         Get value of a key.
 
@@ -77,7 +102,8 @@ class Etcd3Backend:
         # Return value together with revision
         return (result, Etcd3Revision(response.header.revision, mod_revision))
 
-    def watch(self, path, prefix=False, revision=None, depth=None):
+    def watch(self, path :str, prefix :bool=False,
+              revision :'Etcd3Revision'=None, depth :int=None):
         """Watch key or key range.
 
         Use a path ending with `'/'` in combination with `prefix` to
@@ -99,7 +125,7 @@ class Etcd3Backend:
             tagged_path, start_revision=rev, prefix=prefix)
         return Etcd3Watch(watcher, self)
 
-    def list_keys(self, path, recurse=0, revision=None):
+    def list_keys(self, path :str, recurse :int=0, revision :'Etcd3Revision'=None):
         """
         List keys under given path.
 
@@ -143,7 +169,7 @@ class Etcd3Backend:
         ])
         return (sorted_keys, revision)
 
-    def create(self, path, value, lease=None):
+    def create(self, path :str, value :str, lease :etcd3.Lease=None):
         """Create a key and initialise it with the value.
 
         Fails if the key already exists. If a lease is given, the key will
@@ -168,7 +194,7 @@ class Etcd3Backend:
             raise ConfigCollision(
                 path, "Cannot create {}, as it already exists!".format(path))
 
-    def update(self, path, value, must_be_rev=None):
+    def update(self, path :str, value :str, must_be_rev :'Etcd3Revision'=None):
         """
         Update an existing key. Fails if the key does not exist.
 
@@ -194,9 +220,9 @@ class Etcd3Backend:
             raise ConfigVanished(
                 path, "Cannot update {}, as it does not exist!".format(path))
 
-    def delete(self, path,
-               must_exist=True, recursive=False, prefix=False,
-               max_depth=16):
+    def delete(self, path :str,
+               must_exist :bool=True, recursive :bool=False, prefix :bool=False,
+               max_depth :int=16):
         """
         Delete the given key or key range.
 
@@ -256,7 +282,7 @@ class Etcd3Revision:
       changed, for instance to implement an atomic update.
     """
 
-    def __init__(self, revision, mod_revision):
+    def __init__(self, revision :int, mod_revision :int):
         """Instantiate the revision."""
         self.revision = revision
         self.mod_revision = mod_revision
@@ -273,13 +299,13 @@ class Etcd3Watch:
     val, rev)` triples.
     """
 
-    def __init__(self, watcher, backend):
+    def __init__(self, watcher :etcd3.Watcher, backend :Etcd3Backend):
         """Initialise watcher."""
         self._watcher = watcher
         self._backend = backend
         self.queue = None
 
-    def start(self, queue=None):
+    def start(self, queue :queue_m.Queue=None):
         """Activates the watcher, yielding a queue for updates."""
         if queue is None:
             self.queue = queue = queue_m.Queue()
@@ -316,19 +342,8 @@ class Etcd3Watch:
 class Etcd3Transaction:
     """A series of queries and updates to be executed atomically.
 
-    Note that this uses an optimistic STM-style implementation, which
-    cannot guarantee that a transaction runs through successfully. If
-    it fails, the application might want to simply re-run it until it
-    succeeds. The easiest way is to use transactions as an iterator,
-    which implements the appropriate logic:
-
-    .. code-block:: python
-
-        for txn in etcd3.txn():
-             # ... transaction steps ...
-
-    This can also be used to loop a transaction manually, possibly
-    waiting for read values to change (see :meth:`Etcd3Transaction.loop`).
+    Use :py:meth:`Etcd3Backend.txn()` or :py:meth:`Etcd3Watcher.txn()`
+    to construct transactions.
     """
 
     # pylint: disable=too-many-instance-attributes
@@ -359,7 +374,7 @@ class Etcd3Transaction:
     # "get" a key before "updating" it anyway, and collisions on
     # "create" should be quite rare.
 
-    def __init__(self, backend, client, max_retries=64):
+    def __init__(self, backend :Etcd3Backend, client :etcd3.Client, max_retries :int=64):
         """Initialise transaction."""
         self._backend = backend
         self._client = client
@@ -386,7 +401,17 @@ class Etcd3Transaction:
         if self._committed:
             raise RuntimeError("Attempted to modify committed transaction!")
 
-    def get(self, path):
+    @property
+    def revision(self) -> int:
+        """ The last-committed database revision.
+
+        Only valid to call after the transaction has been comitted.
+        """
+        if not self._committed:
+            raise RuntimeError("Revision is undefined on an uncommitted transaction!")
+        return self._revision.revision
+
+    def get(self, path :str) -> str:
         """
         Get value of a key.
 
@@ -412,7 +437,7 @@ class Etcd3Transaction:
             self._revision = rev
         return val
 
-    def list_keys(self, path, recurse=0):
+    def list_keys(self, path :str, recurse :int=0):
         """
         List keys under given path.
 
@@ -463,7 +488,7 @@ class Etcd3Transaction:
         # Sort
         return sorted(keys)
 
-    def create(self, path, value, lease=None):
+    def create(self, path :str, value :str, lease=None):
         """Create a key and initialise it with the value.
 
         Fails if the key already exists. If a lease is given, the key will
@@ -486,7 +511,7 @@ class Etcd3Transaction:
         # Add update request
         self._updates[path] = (value, lease)
 
-    def update(self, path, value):
+    def update(self, path :str, value :str):
         """
         Update an existing key. Fails if the key does not exist.
 
@@ -590,7 +615,7 @@ class Etcd3Transaction:
         self._commit_callbacks = []
         return response.succeeded
 
-    def on_commit(self, callback):
+    def on_commit(self, callback :Callable[[],None]):
         """Register a callback to call when the transaction succeeds.
 
         A bit of a hack, but occassionally useful to add additional
@@ -601,7 +626,7 @@ class Etcd3Transaction:
         """
         self._commit_callbacks.append(callback)
 
-    def reset(self, revision=None):
+    def reset(self, revision :Etcd3Revision=None):
         """Reset the transaction so it can be restarted after commit()."""
         if not self._committed:
             raise RuntimeError("Called reset on an uncommitted transaction!")
@@ -616,8 +641,11 @@ class Etcd3Transaction:
         self._watch = False
         self._watch_timeout = None
 
-    def loop(self, watch=False, watch_timeout=None):
+    @deprecated
+    def loop(self, watch :bool=False, watch_timeout :float=None):
         """Repeat transaction execution, even if it succeeds.
+
+        *Deprecated*: Use :py:class:`Etcd3Watcher` instead, or loop manually.
 
         :param watch: Once the transaction succeeds, block until one of
            the values read changes, then loop the transaction
@@ -653,19 +681,27 @@ class Etcd3Transaction:
                     # Use watches? Then wait for something to happen
                     # before looping.
                     if self._watch:
-                        self.watch()
+                        self._do_watch()
 
                 # Repeat after reset otherwise
                 self.reset()
 
         finally:
-            self.clear_watch()
+            self._clear_watch()
 
         # Ran out of repeats? Fail
         raise RuntimeError("Transaction did not succeed after {} retries!"
                            .format(self._max_retries))
 
+    @deprecated
     def clear_watch(self):
+        """Stop all currently active watchers.
+
+        *Deprecated*: Use :py:class:`Etcd3Watcher` instead.
+        """
+        self._clear_watch()
+
+    def _clear_watch(self):
         """Stop all currently active watchers."""
         # Remove watchers
         for watcher in self._watchers.values():
@@ -723,8 +759,18 @@ class Etcd3Transaction:
     def watch(self):
         """Wait for a change on one of the values read.
 
+        *Deprecated*: Use :py:class:`Etcd3Watcher` instead.
+
         :returns: The revision at which a change was detected.
         """
+        return self._do_watch()
+
+    def _do_watch(self):
+        """Wait for a change on one of the values read.
+
+        :returns: The revision at which a change was detected.
+        """
+
         # Make sure the watchers we have in place match what we read
         self._update_watchers()
 
@@ -814,7 +860,8 @@ class Etcd3Watcher:
     once one of these values has changed.
     """
 
-    def __init__(self, backend, client, timeout=None):
+    def __init__(self, backend :Etcd3Backend, client :etcd3.Client,
+                 timeout :float=None):
         """Initialise watcher.
 
         :param timeout: Maximum time to wait per loop. If ``None``, will
@@ -827,7 +874,7 @@ class Etcd3Watcher:
         self._client = client
         self._timeout = timeout
 
-    def set_timeout(self, timeout):
+    def set_timeout(self, timeout :float):
         """Set a timeout.
 
         The watch loop will always repeat after waiting for the given
@@ -838,7 +885,7 @@ class Etcd3Watcher:
         """
         self._timeout = timeout
 
-    def txn(self, max_retries=64):
+    def txn(self, max_retries :int=64) -> Etcd3Transaction:
         """Create nested transaction.
 
         The watcher loop will iterate when any value read by
@@ -885,14 +932,14 @@ class Etcd3Watcher:
 
                 # TODO: Move those to this class!
                 self._wait_txn.loop(True, self._timeout)
-                self._wait_txn.watch()
+                self._wait_txn._do_watch()
 
                 # Clear current queries
                 self._wait_txn._get_queries = {}
                 self._wait_txn._list_queries = {}
 
         finally:
-            self._wait_txn.clear_watch()
+            self._wait_txn._clear_watch()
 
     def trigger(self):
         """Manually triggers a loop
