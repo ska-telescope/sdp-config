@@ -7,7 +7,7 @@ with open('README.md', 'r') as file:
 
 version = {}
 with open('src/ska_sdp_config/version.py', 'r') as file:
-    exec(file.read(), version)
+    exec(file.read(), version) # pylint: disable=exec-used
 
 setuptools.setup(
     name='ska-sdp-config',

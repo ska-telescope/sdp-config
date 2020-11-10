@@ -5,6 +5,7 @@ import sys
 from datetime import date
 import json
 from socket import gethostname
+from typing import Iterable
 
 from . import backend as backend_mod, entity
 
@@ -37,11 +38,13 @@ class Config:
 
         # Prefixes
         assert global_prefix == '' or global_prefix[0] == '/'
-        self.pb_path = global_prefix + '/pb/'
-        self.sb_path = global_prefix + '/sb/'
-        self.subarray_path = global_prefix + '/subarray/'
-        self.master_path = global_prefix + '/master'
-        self.deploy_path = global_prefix + '/deploy/'
+        self._paths = {
+            'pb': global_prefix + '/pb/',
+            'sb': global_prefix + '/sb/',
+            'subarray': global_prefix + '/subarray/',
+            'master': global_prefix + '/master',
+            'deploy': global_prefix + '/deploy/'
+        }
 
         # Lease associated with client
         self._client_lease = None
@@ -76,14 +79,12 @@ class Config:
 
             return backend_mod.Etcd3Backend(**cargs)
 
-        elif backend == 'memory':
+        if backend == 'memory':
 
             return backend_mod.MemoryBackend()
 
-        else:
-
-            raise ValueError(
-                "Unknown configuration backend {}!".format(backend))
+        raise ValueError(
+            "Unknown configuration backend {}!".format(backend))
 
     def lease(self, ttl=10):
         """
@@ -111,7 +112,7 @@ class Config:
 
         return self._client_lease
 
-    def txn(self, max_retries=64):
+    def txn(self, max_retries :int=64) -> Iterable['Transaction']:
         """Create a :class:`Transaction` for atomic configuration query/change.
 
         As we do not use locks, transactions might have to be repeated in
@@ -133,8 +134,9 @@ class Config:
         :param max_retries: Number of transaction retries before a
             :class:`RuntimeError` gets raised.
         """
-        return TransactionFactory(
-            self, self._backend.txn(max_retries=max_retries))
+
+        for txn in self._backend.txn(max_retries=max_retries):
+            yield Transaction(self, txn, self._paths)
 
     def close(self):
         """Close the client connection."""
@@ -152,21 +154,6 @@ class Config:
         self.close()
         return False
 
-
-class TransactionFactory:
-    """Helper object for making transactions."""
-
-    def __init__(self, config, txn):
-        """Create transaction factory."""
-        self._config = config
-        self._txn = txn
-
-    def __iter__(self):
-        """Create new transaction objects."""
-        for txn in self._txn:
-            yield Transaction(self._config, txn)
-
-
 def dict_to_json(obj):
     """Format a dictionary for writing it into the database.
 
@@ -183,18 +170,14 @@ def dict_to_json(obj):
         indent=2, separators=(',', ': '), sort_keys=True)
 
 
-class Transaction:
+class Transaction: # pylint: disable=too-many-public-methods
     """High-level configuration queries and updates to execute atomically."""
 
-    def __init__(self, config, txn):
+    def __init__(self, config, txn, paths):
         """Instantiate transaction."""
         self._cfg = config
         self._txn = txn
-        self._pb_path = config.pb_path
-        self._sb_path = config.sb_path
-        self._subarray_path = config.subarray_path
-        self._master_path = config.master_path
-        self._deploy_path = config.deploy_path
+        self._paths = paths
 
     @property
     def raw(self):
@@ -233,7 +216,7 @@ class Transaction:
         :returns: Processing block ids, in lexicographical order
         """
         # List keys
-        pb_path = self._pb_path
+        pb_path = self._paths['pb']
         keys = self._txn.list_keys(pb_path + prefix)
 
         # return list, stripping the prefix
@@ -268,28 +251,28 @@ class Transaction:
         :param pb_id: Processing block ID to look up
         :returns: Processing block entity, or None if it doesn't exist
         """
-        dct = self._get(self._pb_path + pb_id)
+        dct = self._get(self._paths['pb'] + pb_id)
         if dct is None:
             return None
         return entity.ProcessingBlock(**dct)
 
-    def create_processing_block(self, pb: entity.ProcessingBlock):
+    def create_processing_block(self, pblock: entity.ProcessingBlock):
         """
         Add a new :class:`ProcessingBlock` to the configuration.
 
         :param pb: Processing block to create
         """
-        assert isinstance(pb, entity.ProcessingBlock)
-        self._create(self._pb_path + pb.id, pb.to_dict())
+        assert isinstance(pblock, entity.ProcessingBlock)
+        self._create(self._paths['pb'] + pblock.id, pblock.to_dict())
 
-    def update_processing_block(self, pb: entity.ProcessingBlock):
+    def update_processing_block(self, pblock: entity.ProcessingBlock):
         """
         Update a :class:`ProcessingBlock` in the configuration.
 
         :param pb: Processing block to update
         """
-        assert isinstance(pb, entity.ProcessingBlock)
-        self._update(self._pb_path + pb.id, pb.to_dict())
+        assert isinstance(pblock, entity.ProcessingBlock)
+        self._update(self._paths['pb'] + pblock.id, pblock.to_dict())
 
     def get_processing_block_owner(self, pb_id: str) -> dict:
         """
@@ -298,7 +281,7 @@ class Transaction:
         :param pb_id: Processing block ID to look up
         :returns: Processing block owner data, or None if not claimed
         """
-        dct = self._get(self._pb_path + pb_id + "/owner")
+        dct = self._get(self._paths['pb'] + pb_id + "/owner")
         if dct is None:
             return None
         return dct
@@ -324,7 +307,7 @@ class Transaction:
         assert lease is not None
 
         # Provide information identifying this process
-        self._create(self._pb_path + pb_id + "/owner", self._cfg.owner, lease)
+        self._create(self._paths['pb'] + pb_id + "/owner", self._cfg.owner, lease)
 
     def get_processing_block_state(self, pb_id: str) -> dict:
         """
@@ -333,7 +316,7 @@ class Transaction:
         :param pb_id: Processing block ID
         :returns: Processing block state, or None if not present
         """
-        state = self._get(self._pb_path + pb_id + "/state")
+        state = self._get(self._paths['pb'] + pb_id + "/state")
         if state is None:
             return None
         return state
@@ -345,7 +328,7 @@ class Transaction:
         :param pb_id: Processing block ID
         :param state: Processing block state to create
         """
-        self._create(self._pb_path + pb_id + "/state", state)
+        self._create(self._paths['pb'] + pb_id + "/state", state)
 
     def update_processing_block_state(self, pb_id: str, state: dict):
         """
@@ -354,7 +337,7 @@ class Transaction:
         :param pb_id: Processing block ID
         :param state: Processing block state to update
         """
-        self._update(self._pb_path + pb_id + "/state", state)
+        self._update(self._paths['pb'] + pb_id + "/state", state)
 
     def get_deployment(self, deploy_id: str) -> entity.Deployment:
         """
@@ -363,7 +346,7 @@ class Transaction:
         :param deploy_id: Name of the deployment
         :returns: Deployment details
         """
-        dct = self._get(self._deploy_path + deploy_id)
+        dct = self._get(self._paths['deploy'] + deploy_id)
         return entity.Deployment(**dct)
 
     def list_deployments(self, prefix=""):
@@ -373,11 +356,11 @@ class Transaction:
         :returns: Deployment IDs
         """
         # List keys
-        keys = self._txn.list_keys(self._deploy_path + prefix)
+        keys = self._txn.list_keys(self._paths['deploy'] + prefix)
 
         # return list, stripping the prefix
-        assert all([key.startswith(self._deploy_path) for key in keys])
-        return list([key[len(self._deploy_path):] for key in keys])
+        assert all([key.startswith(self._paths['deploy']) for key in keys])
+        return list([key[len(self._paths['deploy']):] for key in keys])
 
     def create_deployment(self, dpl: entity.Deployment):
         """
@@ -387,7 +370,7 @@ class Transaction:
         """
         # Add to database
         assert isinstance(dpl, entity.Deployment)
-        self._create(self._deploy_path + dpl.id,
+        self._create(self._paths['deploy'] + dpl.id,
                      dpl.to_dict())
 
     def delete_deployment(self, dpl: entity.Deployment):
@@ -397,7 +380,7 @@ class Transaction:
         :param dpl: Deployment to remove
         """
         # Delete all data associated with deployment
-        deploy_path = self._deploy_path + dpl.id
+        deploy_path = self._paths['deploy'] + dpl.id
         for key in self._txn.list_keys(deploy_path, recurse=5):
             self._txn.delete(key)
 
@@ -409,7 +392,7 @@ class Transaction:
         :returns: scheduling block IDs, in lexicographical order
         """
         # List keys
-        sb_path = self._sb_path
+        sb_path = self._paths['sb']
         keys = self._txn.list_keys(sb_path + prefix)
 
         # Return list, stripping the prefix
@@ -423,7 +406,7 @@ class Transaction:
         :param sb_id: scheduling block ID
         :returns: scheduling block state
         """
-        state = self._get(self._sb_path + sb_id)
+        state = self._get(self._paths['sb'] + sb_id)
         return state
 
     def create_scheduling_block(self, sb_id: str, state: dict):
@@ -433,7 +416,7 @@ class Transaction:
         :param sb_id: scheduling block ID
         :param state: scheduling block state
         """
-        self._create(self._sb_path + sb_id, state)
+        self._create(self._paths['sb'] + sb_id, state)
 
     def update_scheduling_block(self, sb_id: str, state: dict):
         """
@@ -442,7 +425,7 @@ class Transaction:
         :param sb_id: scheduling block ID
         :param state: scheduling block state
         """
-        self._update(self._sb_path + sb_id, state)
+        self._update(self._paths['sb'] + sb_id, state)
 
     def list_subarrays(self, prefix=""):
         """Query subarray IDs from the configuration.
@@ -452,7 +435,7 @@ class Transaction:
         :returns: subarray IDs, in lexicographical order
         """
         # List keys
-        subarray_path = self._subarray_path
+        subarray_path = self._paths['subarray']
         keys = self._txn.list_keys(subarray_path + prefix)
 
         # Return list, stripping the prefix
@@ -466,7 +449,7 @@ class Transaction:
         :param subarray_id: subarray ID
         :returns: subarray state
         """
-        state = self._get(self._subarray_path + subarray_id)
+        state = self._get(self._paths['subarray'] + subarray_id)
         return state
 
     def create_subarray(self, subarray_id: str, state: dict):
@@ -476,7 +459,7 @@ class Transaction:
         :param subarray_id: subarray ID
         :param state: subarray state
         """
-        self._create(self._subarray_path + subarray_id, state)
+        self._create(self._paths['subarray'] + subarray_id, state)
 
     def update_subarray(self, subarray_id: str, state: dict):
         """
@@ -485,7 +468,7 @@ class Transaction:
         :param subarray_id: subarray ID
         :param state: subarray state
         """
-        self._update(self._subarray_path + subarray_id, state)
+        self._update(self._paths['subarray'] + subarray_id, state)
 
     def create_master(self, state: dict) -> None :
         """
@@ -493,7 +476,7 @@ class Transaction:
 
         :param state: master state
         """
-        self._create(self._master_path, state)
+        self._create(self._paths['master'], state)
 
     def update_master(self, state: dict) -> None:
         """
@@ -501,7 +484,7 @@ class Transaction:
 
         :param state: master state
         """
-        self._update(self._master_path, state)
+        self._update(self._paths['master'], state)
 
     def get_master(self) -> dict:
         """
@@ -509,5 +492,5 @@ class Transaction:
 
         :returns: master state
         """
-        state = self._get(self._master_path)
+        state = self._get(self._paths['master'])
         return state

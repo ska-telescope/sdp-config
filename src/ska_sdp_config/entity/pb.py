@@ -23,7 +23,7 @@ class ProcessingBlock:
 
     def __init__(self, id, sbi_id, workflow,
                  parameters={}, dependencies=[],
-                 **kwargs):
+                 **kwargs): # pylint: disable=too-many-arguments
         """
         Create a new processing block structure.
 
@@ -58,7 +58,7 @@ class ProcessingBlock:
         return self._dict
 
     @property
-    def id(self):
+    def id(self): # pylint: disable=invalid-name
         """Return the processing block ID."""
         return self._dict['id']
 

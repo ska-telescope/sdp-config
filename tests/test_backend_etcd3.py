@@ -5,7 +5,6 @@
 import os
 import time
 import pytest
-import threading
 
 from ska_sdp_config.backend import (
     ConfigCollision, ConfigVanished, Etcd3Backend
@@ -605,8 +604,7 @@ def test_transaction_watchers_new(etcd3):
         if i == 4:
             assert len(watch._wait_txn._watchers) == 1
             break
-        else:
-            etcd3.update(key, str(i))
+        etcd3.update(key, str(i))
     assert not txn._watchers
     assert i == 4
 

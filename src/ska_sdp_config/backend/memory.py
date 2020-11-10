@@ -30,9 +30,9 @@ class MemoryBackend:
 
     def __init__(self):
         """Construct a memory backend."""
-        pass
+        return
 
-    def lease(self, *args, **kwargs) -> 'Lease':
+    def lease(self, *_args, **_kwargs) -> 'Lease': # pylint: disable=no-self-use
         """
         Generate a dummy lease object.
 
@@ -42,11 +42,11 @@ class MemoryBackend:
         :param kwargs: arbitrary, not used
         :returns: dummy lease object
         """
-        class Lease:
+        class Lease: # pylint: disable=too-few-public-methods
             """Dummy lease class."""
         return Lease()
 
-    def txn(self, *args, **kwargs) -> 'MemoryTransaction':
+    def txn(self, *_args, **_kwargs) -> 'MemoryTransaction':
         """
         Create an in-memory "transaction".
 
@@ -77,7 +77,7 @@ class MemoryBackend:
             raise ConfigCollision(path,
                                   "path {} already in dictionary".format(path))
 
-    def create(self, path: str, value: str, *args, **kwargs) -> None:
+    def create(self, path: str, value: str, *_args, **_kwargs) -> None:
         """
         Create an entry at the given path.
 
@@ -89,7 +89,7 @@ class MemoryBackend:
         """
         _op(path, value, self._check_not_exists, self._put)
 
-    def update(self, path: str, value: str, *args, **kwargs) -> None:
+    def update(self, path: str, value: str, *_args, **_kwargs) -> None:
         """
         Update an entry at the given path.
 
@@ -204,7 +204,7 @@ class MemoryTransaction:
         """
         return self.backend.get(path)
 
-    def create(self, path: str, value: str, *args, **kwargs) -> None:
+    def create(self, path: str, value: str, *_args, **_kwargs) -> None:
         """
         Create an entry at the given path.
 
@@ -216,7 +216,7 @@ class MemoryTransaction:
         """
         self.backend.create(path, value)
 
-    def update(self, path: str, value: str, *args, **kwargs) -> None:
+    def update(self, path: str, value: str, *_args, **_kwargs) -> None:
         """
         Update an entry at the given path.
 
@@ -229,7 +229,7 @@ class MemoryTransaction:
         self.backend.update(path, value)
 
     def delete(self, path: str, must_exist: bool = True,
-               recursive: bool = False, **kwargs):
+               recursive: bool = False, **_kwargs):
         """
         Delete an entry at the given path.
 
@@ -254,7 +254,7 @@ class MemoryTransaction:
         """
         return self.backend.list_keys(path)
 
-    def loop(self, *args, **kwargs) -> None:
+    def loop(self, *_args, **_kwargs) -> None:
         """
         Loop the transaction.
 

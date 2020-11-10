@@ -17,16 +17,16 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+# pylint: disable=invalid-name,redefined-builtin,missing-module-docstring
+
+import os
+import sys
 
 autodoc_mock_imports = [
     'etcd3',
     'docopt-ng',
     'pyyaml',
 ]
-
-import os
-import sys
-
 
 # -- Path set up --------------------------------------------------------------
 
@@ -35,7 +35,7 @@ sys.path.insert(0, os.path.abspath(
 ))
 
 
-def setup(app):
+def setup(app): # pylint: disable=missing-function-docstring
     app.add_css_file('css/custom.css')
     app.add_js_file('js/github.js')
 

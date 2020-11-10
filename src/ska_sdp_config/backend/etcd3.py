@@ -1,10 +1,12 @@
 """Etcd3 backend for SKA SDP configuration DB."""
 
+# pylint: disable=fixme
+
 import time
 import queue as queue_m
-from deprecated import deprecated
 from typing import Iterable, Callable
 
+from deprecated import deprecated
 import etcd3
 from .common import (
     _tag_depth, _untag_depth, _check_path, ConfigCollision, ConfigVanished
@@ -220,7 +222,7 @@ class Etcd3Backend:
             raise ConfigVanished(
                 path, "Cannot update {}, as it does not exist!".format(path))
 
-    def delete(self, path :str,
+    def delete(self, path :str,  # pylint: disable=too-many-arguments
                must_exist :bool=True, recursive :bool=False, prefix :bool=False,
                max_depth :int=16):
         """
@@ -269,27 +271,36 @@ class Etcd3Backend:
 
 
 class Etcd3Revision:
-    """Identifies the revision of the database.
-
-    This has two parts:
-
-    * `revision` is the database revision at the point in time when
-      the query was made. Can be used for querying a consistent
-      snapshot.
-
-    * `mod_revision` given the revision when a key was last
-      modified. This can be used for checking whether a key has
-      changed, for instance to implement an atomic update.
-    """
+    """Identifies the revision of the database. """
 
     def __init__(self, revision :int, mod_revision :int):
         """Instantiate the revision."""
-        self.revision = revision
-        self.mod_revision = mod_revision
+        self._revision = revision
+        self._mod_revision = mod_revision
 
     def __repr__(self):
         """Build string representation."""
         return "Etcd3Revision({},{})".format(self.revision, self.mod_revision)
+
+    @property
+    def revision(self):
+        """
+        The database revision at the point in time when the query was made.
+
+        Can be used for querying a consistent
+        snapshot.
+        """
+        return self._revision
+
+    @property
+    def mod_revision(self):
+        """
+        The revision when a key was last modified.
+
+        This can be used for checking whether a key has
+        changed, for instance to implement an atomic update.
+        """
+        return self._mod_revision
 
 
 class Etcd3Watch:
@@ -911,6 +922,7 @@ class Etcd3Watcher:
             yield txn
 
         # Extract read values from transaction
+        # pylint: disable=protected-access,undefined-loop-variable
         if txn._committed:
 
             # Take over earliest revision used in a transaction, as we
@@ -931,6 +943,7 @@ class Etcd3Watcher:
                 yield self
 
                 # TODO: Move those to this class!
+                # pylint: disable=protected-access
                 self._wait_txn.loop(True, self._timeout)
                 self._wait_txn._do_watch()
 
@@ -939,6 +952,7 @@ class Etcd3Watcher:
                 self._wait_txn._list_queries = {}
 
         finally:
+            # pylint: disable=protected-access
             self._wait_txn._clear_watch()
 
     def trigger(self):
@@ -948,4 +962,5 @@ class Etcd3Watcher:
         the watcher is currently waiting.
         """
 
+        # pylint: disable=protected-access
         self._wait_txn.trigger_loop()

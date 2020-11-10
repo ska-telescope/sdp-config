@@ -10,76 +10,49 @@ from ska_sdp_config import cli
 
 PREFIX = "/__test_cli"
 
+def _test_cli_command(capsys, argv,
+                      expected_stdout=None, expected_stderr=None):
+
+    cli.main(argv)
+    out, err = capsys.readouterr()
+    if expected_stdout is not None:
+        assert out == expected_stdout
+    if expected_stderr is not None:
+        assert err == expected_stderr
 
 def test_cli_simple(capsys):
 
     if os.getenv("SDP_TEST_HOST") is not None:
         os.environ["SDP_CONFIG_HOST"] = os.getenv("SDP_TEST_HOST")
 
-    cli.main(['delete', '-R', PREFIX])
-    out, err = capsys.readouterr()
+    _test_cli_command(capsys, ['delete', '-R', PREFIX])
 
-    cli.main(['get', PREFIX+'/test'])
-    out, err = capsys.readouterr()
-    assert out == PREFIX+"/test = None\n"
-    assert err == ""
+    _test_cli_command(capsys, ['get', PREFIX+'/test'], PREFIX+"/test = None\n", "")
+    _test_cli_command(capsys, ['create', PREFIX+'/test', 'asdf'], "OK\n", "")
+    _test_cli_command(capsys, ['get', PREFIX+'/test'], PREFIX+"/test = asdf\n", "")
+    _test_cli_command(capsys, ['update', PREFIX+'/test', 'asd'], "OK\n", "")
+    _test_cli_command(capsys, ['get', PREFIX+'/test'], PREFIX+"/test = asd\n", "")
+    _test_cli_command(capsys, ['-q', 'get', PREFIX+'/test'], "asd\n", "")
+    _test_cli_command(capsys, ['delete', PREFIX+'/test'], "OK\n", "")
 
-    cli.main(['create', PREFIX+'/test', 'asdf'])
-    out, err = capsys.readouterr()
-    assert out == "OK\n"
-    assert err == ""
+def test_cli_simple2(capsys):
 
-    cli.main(['get', PREFIX+'/test'])
-    out, err = capsys.readouterr()
-    assert out == PREFIX+"/test = asdf\n"
-    assert err == ""
+    if os.getenv("SDP_TEST_HOST") is not None:
+        os.environ["SDP_CONFIG_HOST"] = os.getenv("SDP_TEST_HOST")
 
-    cli.main(['update', PREFIX+'/test', 'asd'])
-    out, err = capsys.readouterr()
-    assert out == "OK\n"
-    assert err == ""
-
-    cli.main(['get', PREFIX+'/test'])
-    out, err = capsys.readouterr()
-    assert out == PREFIX+"/test = asd\n"
-    assert err == ""
-
-    cli.main(['-q', 'get', PREFIX+'/test'])
-    out, err = capsys.readouterr()
-    assert out == "asd\n"
-    assert err == ""
-
-    cli.main(['create', PREFIX+'/foo', 'bar'])
-    out, err = capsys.readouterr()
-    assert out == "OK\n"
-    assert err == ""
-
-    cli.main(['ls', PREFIX+'/'])
-    out, err = capsys.readouterr()
-    assert out == "Keys with {pre}/ prefix:\n{pre}/foo\n{pre}/test\n".format(
-        pre=PREFIX)
-    assert err == ""
-
-    cli.main(['-q', 'list', PREFIX+'/'])
-    out, err = capsys.readouterr()
-    assert out == "{pre}/foo {pre}/test\n".format(pre=PREFIX)
-    assert err == ""
-
-    cli.main(['--prefix', PREFIX, 'process', 'realtime:test:0.1'])
-    out, err = capsys.readouterr()
-    assert out == "OK, pb_id = pb-sdpcfg-{}-00000\n".format(
-        date.today().strftime('%Y%m%d'))
-    assert err == ""
-
-    cli.main(['delete', PREFIX+'/test'])
-    out, err = capsys.readouterr()
-    assert out == "OK\n"
-    assert err == ""
-
-    cli.main(['delete', PREFIX+'/foo'])
-    out, err = capsys.readouterr()
-    assert out == "OK\n"
-    assert err == ""
+    _test_cli_command(capsys, ['create', PREFIX+'/test', 'asdf'], "OK\n", "")
+    _test_cli_command(capsys, ['create', PREFIX+'/foo', 'bar'], "OK\n", "")
+    _test_cli_command(capsys, ['ls', PREFIX+'/'],
+                      "Keys with {pre}/ prefix:\n{pre}/foo\n{pre}/test\n".format(
+                          pre=PREFIX), "")
+    _test_cli_command(capsys, ['-q', 'list', PREFIX+'/'],
+                      "{pre}/foo {pre}/test\n".format(pre=PREFIX),
+                      "")
+    _test_cli_command(capsys, ['--prefix', PREFIX, 'process', 'realtime:test:0.1'],
+                      "OK, pb_id = pb-sdpcfg-{}-00000\n".format(
+                          date.today().strftime('%Y%m%d')), "")
+    _test_cli_command(capsys, ['delete', PREFIX+'/test'], "OK\n", "")
+    _test_cli_command(capsys, ['delete', PREFIX+'/foo'], "OK\n", "")
 
 
 if __name__ == '__main__':

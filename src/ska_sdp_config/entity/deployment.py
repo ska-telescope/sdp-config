@@ -51,7 +51,7 @@ class Deployment:
         return self._dict
 
     @property
-    def id(self):
+    def id(self): # pylint: disable=invalid-name
         """Return the deployment id."""
         return self._dict['id']
 
