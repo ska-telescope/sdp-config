@@ -491,7 +491,7 @@ class Transaction:
         """
         Create master.
 
-        :param state: subarray state
+        :param state: master state
         """
         self._create(self._master_path, state)
 
@@ -511,4 +511,3 @@ class Transaction:
         """
         state = self._get(self._master_path)
         return state
-
