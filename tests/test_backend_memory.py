@@ -3,6 +3,7 @@ from ska_sdp_config.backend import (
     ConfigVanished, ConfigCollision, MemoryBackend
 )
 from ska_sdp_config.backend.memory import MemoryTransaction
+from ska_sdp_config.config import dict_to_json
 
 
 @pytest.fixture
@@ -48,3 +49,10 @@ def test_stuff(txn: MemoryTransaction):
 
     assert txn.backend.lease() is not None
     txn.backend.close()
+
+
+def test_state(txn: MemoryTransaction):
+    txn.create('/master', dict_to_json({"state": "standby"}))
+    txn.delete('/master', must_exist=False, recursive=True)
+    paths = txn.list_keys('/')
+    assert len(paths) == 0

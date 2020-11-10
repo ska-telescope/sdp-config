@@ -118,7 +118,7 @@ class MemoryBackend:
             self._check_exists(tag)
         if recursive:
             depth = _depth(path)
-            for lvl in range(depth+1, depth+max_depth):
+            for lvl in range(depth, depth+max_depth):
                 tag = _tag_depth(path, depth=lvl)
                 for key in self._data.copy().keys():
                     if key.startswith(tag):
