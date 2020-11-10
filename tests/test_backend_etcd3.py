@@ -745,6 +745,16 @@ def test_transaction_retries(etcd3):
             txn.loop()
     assert i == 11
 
+    # Check that this also works from a watcher
+    for watcher in etcd3.watcher():
+        with pytest.raises(RuntimeError, match="9 retries"):
+            for i, txn in enumerate(watcher.txn(max_retries=9)):
+                v2 = txn.get(key)
+                etcd3.update(key, i)
+                txn.update(key, v2 + "x")
+        assert i == 9
+        assert etcd3.get(key)[0] == "9"
+        break
 
 if __name__ == '__main__':
     pytest.main()
