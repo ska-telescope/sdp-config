@@ -9,10 +9,11 @@ version = {}
 with open('src/ska_sdp_config/version.py', 'r') as file:
     exec(file.read(), version) # pylint: disable=exec-used
 
-with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
-with open('requirements-test.txt') as f:
-    requirements_test = f.read().splitlines()
+def requirements_from(fname):
+    """ Read requirements from a file. """
+    with open(fname) as req_file:
+        return [ req for req in req_file.read().splitlines()
+                 if req[0] != '-' ]
 
 setuptools.setup(
     name='ska-sdp-config',
@@ -23,9 +24,9 @@ setuptools.setup(
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
     url='http://gitlab.com/ska-telescope/sdp-config/',
-    install_requires=requirements,
+    install_requires=requirements_from('requirements.txt'),
     setup_requires=['pytest-runner'],
-    tests_require=requirements_test,
+    tests_require=requirements_from('requirements-test.txt'),
     package_dir={'': 'src'},
     packages=setuptools.find_packages('src'),
     scripts=['scripts/sdpcfg'],
