@@ -65,16 +65,20 @@ class Etcd3Backend:
         for txn in Etcd3Transaction(self, self._client, max_retries):
             yield txn
 
-    def watcher(self, timeout=None) -> Iterable["Etcd3Watcher"]:
+    def watcher(self, timeout=None,
+                txn_wrapper :Callable[["Etcd3Transaction"], object]=None) \
+                -> Iterable["Etcd3Watcher"]:
         """Create a new watcher.
 
         Useful for waiting for changes in the configuration. See
         :py:class:`Etcd3Watcher`.
 
         :param timeout: Timeout for waiting. Watcher will loop after this time.
-
+        :param txn_wrapper: Function to wrap transactions returned by the
+           wrapper.
+        :returns: Watcher iterator
         """
-        return Etcd3Watcher(self, self._client, timeout)
+        return Etcd3Watcher(self, self._client, timeout, txn_wrapper)
 
     def get(self, path :str, revision :'Etcd3Revision'=None):
         """
@@ -873,7 +877,8 @@ class Etcd3Watcher:
     """
 
     def __init__(self, backend :Etcd3Backend, client :etcd3.Client,
-                 timeout :float=None):
+                 timeout :float=None,
+                 txn_wrapper :Callable[[Etcd3Transaction], object]=None):
         """Initialise watcher.
 
         :param timeout: Maximum time to wait per loop. If ``None``, will
@@ -885,6 +890,7 @@ class Etcd3Watcher:
         self._backend = backend
         self._client = client
         self._timeout = timeout
+        self._txn_wrapper = txn_wrapper
 
     def set_timeout(self, timeout :float):
         """Set a timeout.
@@ -920,7 +926,10 @@ class Etcd3Watcher:
         # could share some sort of cache so they don't need to
         # re-query keys...
         for txn in Etcd3Transaction(self._backend, self._client, max_retries):
-            yield txn
+            if self._txn_wrapper is not None:
+                yield self._txn_wrapper(txn)
+            else:
+                yield txn
 
         # Extract read values from transaction
         # pylint: disable=protected-access,undefined-loop-variable

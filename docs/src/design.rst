@@ -44,6 +44,8 @@ transaction (that's why it is a loop!) until it succeeds. The
 idea is that this is fairly rare, and repeating the transaction should
 typically be cheap.
 
+.. _usage-guide:
+
 Usage Guidelines
 ----------------
 

@@ -131,12 +131,36 @@ class Config:
         application must make sure that the loop body has no other
         observable side effects.
 
+        See also :ref:`Usage Guide <usage-guide>` for best practices
+        for using transactions.
+
         :param max_retries: Number of transaction retries before a
             :class:`RuntimeError` gets raised.
+
         """
 
         for txn in self._backend.txn(max_retries=max_retries):
             yield Transaction(self, txn, self._paths)
+
+    def watcher(self, timeout=None) -> Iterable['Watcher']:
+        """Create a new watcher.
+
+        Useful for waiting for changes in the configuration. Calling
+        :py:meth:`Etcd3Watcher.txn()` on the returned watchers will
+        create :py:class:`Transaction` objects just like
+        :py:meth:`txn()`.
+
+        See also :ref:`Usage Guide <usage-guide>` for best practices
+        for using watchers.
+
+        :param timeout: Timeout for waiting. Watcher will loop after this time.
+
+        """
+        def txn_wrapper(txn):
+            return Transaction(self, txn, self._paths)
+
+        for watcher in self._backend.watcher(timeout, txn_wrapper):
+            yield watcher
 
     def close(self):
         """Close the client connection."""
