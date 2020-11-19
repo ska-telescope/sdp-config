@@ -65,7 +65,13 @@ class Config:
         if backend == 'etcd3':
 
             if 'host' not in cargs:
-                cargs['host'] = os.getenv('SDP_CONFIG_HOST', '127.0.0.1')
+
+                k8s_ns = os.getenv('SDP_CONFIG_K8S_NAMESPACE')
+                if os.getenv('SDP_CONFIG_HOST') is None and k8s_ns is not None:
+                    k8s_name = os.getenv('SDP_CONFIG_K8S_NAME', 'sdp-etcd-client.svc')
+                    cargs['host'] = f'{k8s_name}.{k8s_ns}.kubernetes'
+                else:
+                    cargs['host'] = os.getenv('SDP_CONFIG_HOST', '127.0.0.1')
             if 'port' not in cargs:
                 cargs['port'] = int(os.getenv('SDP_CONFIG_PORT', '2379'))
             if 'protocol' not in cargs:

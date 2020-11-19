@@ -23,10 +23,27 @@ class Etcd3Backend:
 
     """
 
-    def __init__(self, *args, **kw_args):
+    def __init__(self, host :str, port :int, *args, **kw_args):
         """Instantiate the database client.
         """
-        self._client = etcd3.Client(*args, **kw_args)
+
+        # Attempting to connect via Kubernetes port-forward?
+        if host.endswith('.kubernetes'):
+
+            # Connect to Kubernetes
+            from kubernetes import client, config
+            config.load_kube_config()
+            v1 = client.CoreV1Api()
+            v1.read_namespaced_service('sdp-etcd-client', 'skampi-peter')
+
+            # Set up forward
+            from . import k8s_fwd
+            import socket
+            with k8s_fwd.KubernetesPortforward(v1):
+                self._client = etcd3.Client(host, port, *args, **kw_args)
+
+        else:
+            self._client = etcd3.Client(host, port, *args, **kw_args)
 
     def lease(self, ttl :int=10) -> etcd3.Lease:
         """Generate a new lease.
