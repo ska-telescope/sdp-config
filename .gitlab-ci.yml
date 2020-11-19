@@ -45,6 +45,19 @@ test:
     expire_in: 1 week
     when: always
 
+# This is meant to mimick relatively closely what readthedocs would do
+# - to verify that it will work correctly
+docs:
+  stage: test
+  before_script:
+  - python -m pip install --exists-action=w --no-cache-dir -r docs/requirements.txt
+  script:
+  - (cd docs/src; sphinx-build -T -E -d _build/doctrees-readthedocs -D language=en . _build/html -W)
+  artifacts:
+    paths:
+    - docs/src/_build
+    expire_in: 1 week
+
 lint:
   stage: lint
   dependencies:
