@@ -44,6 +44,10 @@ class MemoryBackend:
         """
         class Lease: # pylint: disable=too-few-public-methods
             """Dummy lease class."""
+            def __enter__(self):
+                """Dummy enter method."""
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                """Dummy exit method."""
         return Lease()
 
     def txn(self, *_args, **_kwargs) -> 'MemoryTransaction':
