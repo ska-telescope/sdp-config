@@ -18,6 +18,18 @@ moment). Location can be configured using the ``SDP_CONFIG_HOST`` and
 ``2379``, which should work with a local ``etcd`` started without any
 configuration.
 
+You can find ``etcd`` pre-built binaries, for Linux, Windows, and MacOS,
+here: https://github.com/etcd-io/etcd/releases.
+
+You can also use homebrew to install ``etcd`` on a MacOS:
+
+.. code-block:: bash
+
+    brew install etcd
+
+If you encounter issues follow: https://brewinstall.org/install-etcd-on-mac-with-brew/
+
+
 This should give you access to SDP configuration information, for instance try:
 
 .. code-block:: python
@@ -46,3 +58,12 @@ configuration data. For instance run:
    sdpcfg list values /pb/
 
 to query all processing blocks.
+
+Running unit tests locally
+--------------------------
+
+You will need to have a database backend to run the tests as well.
+See "Basic usage" above for instructions on how to install an ``etcd`` backend on your machine.
+
+Once you started the database (run ``etcd`` in the command line),
+you will be able to run the tests using pytest.
