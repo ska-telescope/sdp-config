@@ -178,6 +178,7 @@ class Config:
         self.close()
         return False
 
+
 def dict_to_json(obj):
     """Format a dictionary for writing it into the database.
 
@@ -194,7 +195,7 @@ def dict_to_json(obj):
         indent=2, separators=(',', ': '), sort_keys=True)
 
 
-class Transaction: # pylint: disable=too-many-public-methods
+class Transaction:  # pylint: disable=too-many-public-methods
     """High-level configuration queries and updates to execute atomically."""
 
     def __init__(self, config, txn, paths):

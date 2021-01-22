@@ -60,6 +60,17 @@ class MemoryBackend:
         """
         return MemoryTransaction(self)
 
+    def watcher(self, timeout, txn_wrapper, *args, **kwargs):
+        """
+        Create an in-memory "watcher".
+
+        :param args: arbitrary arguments for mocking method behaviour
+        :param kwargs: arbitrary keyword arguments for mocking method behaviour
+        :returns: MemoryWatcher object (mock of Etcd3Watcher)
+        """
+        # pylint: disable=unused-argument
+        return MemoryWatcher(txn_wrapper, self, *args, **kwargs)
+
     def get(self, path: str) -> str:
         """
         Get the value at the given path.
@@ -246,7 +257,7 @@ class MemoryTransaction:
         """
         self.backend.delete(path, must_exist=must_exist, recursive=recursive)
 
-    def list_keys(self, path: str) -> List[str]:
+    def list_keys(self, path: str, **kwargs) -> List[str]:
         """
         Get a list of the keys at the given path.
 
@@ -256,6 +267,7 @@ class MemoryTransaction:
         :param path:
         :returns: list of keys
         """
+        # pylint: disable=unused-argument
         return self.backend.list_keys(path)
 
     def loop(self, *_args, **_kwargs) -> None:
@@ -266,3 +278,35 @@ class MemoryTransaction:
 
         :returns: nothing
         """
+
+
+class MemoryWatcher:
+    """
+    Watcher wrapper around the backend implementation (Etcd3Watcher)
+    """
+    def __init__(self, txn_wrapper, backend: MemoryBackend, *args, **kwargs):
+        """
+        param: txn_wrapper: wrapper object, which wraps the txn object with
+                            config.Transaction; needed to mitigate real behaviour
+        """
+        # pylint: disable=unused-argument
+        self.backend = backend
+        self.txn_wrapper = txn_wrapper
+
+    def __iter__(self):
+        """
+        Iterate over just this object.
+
+        :returns: this object
+        """
+        yield self
+
+    def txn(self):
+        """
+        Yield the wrapped MemoryTransaction object
+
+        It does not implement the commit check that is part of
+        Etcd3Watcher.txn(), hence it acts as MemoryBackend.txn()
+        """
+        for txn in MemoryTransaction(self.backend):
+            yield self.txn_wrapper(txn)

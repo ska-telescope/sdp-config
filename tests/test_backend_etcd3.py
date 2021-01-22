@@ -564,6 +564,7 @@ def test_transaction_watchers(etcd3):
 
     etcd3.delete(key, recursive=True, must_exist=False)
 
+
 @pytest.mark.timeout(2)
 def test_transaction_watchers_new(etcd3):
 
@@ -755,6 +756,7 @@ def test_transaction_retries(etcd3):
         assert i == 9
         assert etcd3.get(key)[0] == "9"
         break
+
 
 if __name__ == '__main__':
     pytest.main()

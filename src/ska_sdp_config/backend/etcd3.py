@@ -28,7 +28,7 @@ class Etcd3Backend:
         """
         self._client = etcd3.Client(*args, **kw_args)
 
-    def lease(self, ttl :int=10) -> etcd3.Lease:
+    def lease(self, ttl: int=10) -> etcd3.Lease:
         """Generate a new lease.
 
         Once entered can be associated with keys, which will be kept
@@ -856,6 +856,7 @@ class Etcd3Transaction:
 
         # Push a magic "cancel" entry
         self._watch_queue.put((None,None,None))
+
 
 class Etcd3Watcher:
     """Watch for database changes by using nested transactions
