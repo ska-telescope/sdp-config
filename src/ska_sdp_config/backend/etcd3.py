@@ -5,12 +5,16 @@
 import time
 import queue as queue_m
 from typing import Iterable, Callable
+import logging
+import socket
 
 from deprecated import deprecated
 import etcd3
 from .common import (
     _tag_depth, _untag_depth, _check_path, ConfigCollision, ConfigVanished
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Etcd3Backend:
@@ -342,7 +346,54 @@ class Etcd3Watch:
     def stop(self):
         """Deactivates the watcher."""
         self._watcher.clear_callbacks()
-        self._watcher.stop()
+
+        # Temporary workaround for testing: Manually stop the
+        # watcher. This is exactly what the original call would do,
+        # just with way more safety and logging
+        # pylint: disable=protected-access,broad-except,too-many-lines
+
+        #self._watcher.stop()
+        LOGGER.debug("stopping watcher")
+        self._watcher.watching = False
+
+        # Kill the response stream
+        resp = self._watcher._resp
+        if resp is not None and not resp.raw.closed:
+
+            # First attempt to shut down socket
+            try:
+                sock = socket.fromfd(resp.raw._fp.fileno(), socket.AF_INET,
+                                     socket.SOCK_STREAM)
+                sock.shutdown(socket.SHUT_RDWR)
+                sock.close()
+            except Exception as exc:
+                print(exc)
+                LOGGER.debug("Exception in socket shutdown", exc_info=True)
+
+            # Then attempt to close the raw request, request, and connection
+            try:
+                resp.raw.close()
+            except Exception as exc:
+                print(exc)
+                LOGGER.debug("Exception in closing raw request", exc_info=True)
+            try:
+                resp.close()
+            except Exception as exc:
+                print(exc)
+                LOGGER.debug("Exception in closing request", exc_info=True)
+            try:
+                if hasattr(resp, 'connection'):
+                    resp.connection.close()
+            except Exception as exc:
+                print(exc)
+                LOGGER.debug("Exception in closing connection", exc_info=True)
+
+        # Finally join the thread - but with a timeout
+        if self._watcher._thread and self._watcher._thread.is_alive():
+            self._watcher._thread.join(1)
+            if self._watcher._thread.is_alive():
+                LOGGER.warning("Watcher thread did not exit!")
+
         self.queue = None
 
     def __enter__(self):
