@@ -343,6 +343,7 @@ class Etcd3Watch:
         self._watcher.onEvent(on_event)
         self._watcher.runDaemon()
 
+    # pylint: disable=too-many-branches
     def stop(self):
         """Deactivates the watcher."""
         self._watcher.clear_callbacks()
@@ -353,24 +354,38 @@ class Etcd3Watch:
         # pylint: disable=protected-access,broad-except,too-many-lines
 
         #self._watcher.stop()
-        LOGGER.debug("stopping watcher")
+        LOGGER.debug("Stopping watcher")
         self._watcher.watching = False
 
-        # Kill the response stream
+        # Try to repeat this a couple of time
+        for _ in range(10):
+
+            # Kill the response stream
+            resp = self._watcher._resp
+            if resp is not None and not resp.raw.closed:
+
+                # First attempt to shut down socket
+                try:
+                    sock = socket.fromfd(resp.raw._fp.fileno(), socket.AF_INET,
+                                         socket.SOCK_STREAM)
+                    sock.shutdown(socket.SHUT_RDWR)
+                    sock.close()
+                except Exception as exc:
+                    print(exc)
+                    LOGGER.debug("Exception in socket shutdown", exc_info=True)
+
+            # Finally join the thread - but with a timeout
+            if self._watcher._thread and self._watcher._thread.is_alive():
+                self._watcher._thread.join(0.1)
+            # Stop if there's no thread (any more)
+            if not self._watcher._thread or not self._watcher._thread.is_alive():
+                break
+            LOGGER.debug("re-trying closing watcher stream...")
+
+        # Then attempt to close the raw request, request, and
+        # connection, if not reset
         resp = self._watcher._resp
         if resp is not None and not resp.raw.closed:
-
-            # First attempt to shut down socket
-            try:
-                sock = socket.fromfd(resp.raw._fp.fileno(), socket.AF_INET,
-                                     socket.SOCK_STREAM)
-                sock.shutdown(socket.SHUT_RDWR)
-                sock.close()
-            except Exception as exc:
-                print(exc)
-                LOGGER.debug("Exception in socket shutdown", exc_info=True)
-
-            # Then attempt to close the raw request, request, and connection
             try:
                 resp.raw.close()
             except Exception as exc:
@@ -388,11 +403,13 @@ class Etcd3Watch:
                 print(exc)
                 LOGGER.debug("Exception in closing connection", exc_info=True)
 
-        # Finally join the thread - but with a timeout
+        # Final attempt to join the thread
         if self._watcher._thread and self._watcher._thread.is_alive():
-            self._watcher._thread.join(1)
-            if self._watcher._thread.is_alive():
-                LOGGER.warning("Watcher thread did not exit!")
+            self._watcher._thread.join(0.1)
+        if self._watcher._thread and self._watcher._thread.is_alive():
+            LOGGER.warning("Watcher thread did not exit!")
+        else:
+            LOGGER.warning("Watcher thread stopped")
 
         self.queue = None
 
@@ -804,7 +821,7 @@ class Etcd3Transaction:
             # by iterating over the values won't create extra
             # watches here!
             tagged_path = _tag_depth(path)
-            if not any([tagged_path.startswith(pre) for pre in prefixes]):
+            if not any(tagged_path.startswith(pre) for pre in prefixes):
                 active_watchers.add(query)
                 # Start individual watcher, if required
                 if self._watchers.get(query) is None:

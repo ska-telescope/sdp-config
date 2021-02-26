@@ -245,8 +245,8 @@ class Transaction:  # pylint: disable=too-many-public-methods
         keys = self._txn.list_keys(pb_path + prefix)
 
         # return list, stripping the prefix
-        assert all([key.startswith(pb_path) for key in keys])
-        return list([key[len(pb_path):] for key in keys])
+        assert all(key.startswith(pb_path) for key in keys)
+        return list(key[len(pb_path):] for key in keys)
 
     def new_processing_block_id(self, generator: str):
         """Generate a new processing block ID that is not yet in use.
@@ -384,8 +384,8 @@ class Transaction:  # pylint: disable=too-many-public-methods
         keys = self._txn.list_keys(self._paths['deploy'] + prefix)
 
         # return list, stripping the prefix
-        assert all([key.startswith(self._paths['deploy']) for key in keys])
-        return list([key[len(self._paths['deploy']):] for key in keys])
+        assert all(key.startswith(self._paths['deploy']) for key in keys)
+        return list(key[len(self._paths['deploy']):] for key in keys)
 
     def create_deployment(self, dpl: entity.Deployment):
         """
@@ -421,8 +421,8 @@ class Transaction:  # pylint: disable=too-many-public-methods
         keys = self._txn.list_keys(sb_path + prefix)
 
         # Return list, stripping the prefix
-        assert all([key.startswith(sb_path) for key in keys])
-        return list([key[len(sb_path):] for key in keys])
+        assert all(key.startswith(sb_path) for key in keys)
+        return list(key[len(sb_path):] for key in keys)
 
     def get_scheduling_block(self, sb_id: str) -> dict:
         """
@@ -464,8 +464,8 @@ class Transaction:  # pylint: disable=too-many-public-methods
         keys = self._txn.list_keys(subarray_path + prefix)
 
         # Return list, stripping the prefix
-        assert all([key.startswith(subarray_path) for key in keys])
-        return list([key[len(subarray_path):] for key in keys])
+        assert all(key.startswith(subarray_path) for key in keys)
+        return list(key[len(subarray_path):] for key in keys)
 
     def get_subarray(self, subarray_id: str) -> dict:
         """
