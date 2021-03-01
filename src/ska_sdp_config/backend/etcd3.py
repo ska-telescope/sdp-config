@@ -13,6 +13,7 @@ import etcd3
 from .common import (
     _tag_depth, _untag_depth, _check_path, ConfigCollision, ConfigVanished
 )
+from requests import ConnectionError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -354,9 +355,23 @@ class Etcd3Watch:
         # pylint: disable=protected-access,broad-except,too-many-lines
 
         #self._watcher.stop()
-        LOGGER.debug("Stopping watcher")
+        LOGGER.debug(f"Stopping watcher {self._watcher._thread.name}")
 
-        # Try to repeat this a couple of time
+        # Prevent re-tries by overwriting the watcher's client. The
+        # problem here is that the way Watcher.__iter__ operates, if
+        # self.watching is False after self.request_create() finishes,
+        # it will just silently re-set self.watching and re-try the
+        # connection. This is the only reliable way to break it out of
+        # that loop.
+        class DummyClient(object):
+            def __init__(self, watcher):
+                self._watcher = watcher
+            def watch_create(*args, **kwargs):
+                self._watcher.watching = False
+                raise ConnectionError()
+        self._watcher.client = DummyClient(self._watcher)
+
+        # Try to repeat this a couple of times
         for _ in range(10):
 
             # Kill the response stream
@@ -376,7 +391,7 @@ class Etcd3Watch:
 
             # Finally join the thread - but with a timeout
             if self._watcher._thread and self._watcher._thread.is_alive():
-                self._watcher._thread.join(0.01)
+                self._watcher._thread.join(0.1)
             # Stop if there's no thread (any more)
             if not self._watcher._thread or not self._watcher._thread.is_alive():
                 break
