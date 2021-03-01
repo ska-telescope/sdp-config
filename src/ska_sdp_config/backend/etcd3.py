@@ -10,10 +10,10 @@ import socket
 
 from deprecated import deprecated
 import etcd3
+import requests
 from .common import (
     _tag_depth, _untag_depth, _check_path, ConfigCollision, ConfigVanished
 )
-from requests import ConnectionError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -355,7 +355,7 @@ class Etcd3Watch:
         # pylint: disable=protected-access,broad-except,too-many-lines
 
         #self._watcher.stop()
-        LOGGER.debug(f"Stopping watcher {self._watcher._thread.name}")
+        LOGGER.debug("Stopping watcher %s", self._watcher._thread.name)
 
         # Prevent re-tries by overwriting the watcher's client. The
         # problem here is that the way Watcher.__iter__ operates, if
@@ -363,12 +363,13 @@ class Etcd3Watch:
         # it will just silently re-set self.watching and re-try the
         # connection. This is the only reliable way to break it out of
         # that loop.
-        class DummyClient(object):
+        # pylint: disable=too-few-public-methods,missing-class-docstring,missing-function-docstring
+        class DummyClient():
             def __init__(self, watcher):
                 self._watcher = watcher
-            def watch_create(*args, **kwargs):
+            def watch_create(self, *_args, **_kwargs):
                 self._watcher.watching = False
-                raise ConnectionError()
+                raise requests.ConnectionError()
         self._watcher.client = DummyClient(self._watcher)
 
         # Try to repeat this a couple of times
