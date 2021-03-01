@@ -355,13 +355,13 @@ class Etcd3Watch:
 
         #self._watcher.stop()
         LOGGER.debug("Stopping watcher")
-        self._watcher.watching = False
 
         # Try to repeat this a couple of time
         for _ in range(10):
 
             # Kill the response stream
             resp = self._watcher._resp
+            self._watcher.watching = False
             if resp is not None and not resp.raw.closed:
 
                 # First attempt to shut down socket
@@ -376,7 +376,7 @@ class Etcd3Watch:
 
             # Finally join the thread - but with a timeout
             if self._watcher._thread and self._watcher._thread.is_alive():
-                self._watcher._thread.join(0.1)
+                self._watcher._thread.join(0.01)
             # Stop if there's no thread (any more)
             if not self._watcher._thread or not self._watcher._thread.is_alive():
                 break
@@ -409,7 +409,7 @@ class Etcd3Watch:
         if self._watcher._thread and self._watcher._thread.is_alive():
             LOGGER.warning("Watcher thread did not exit!")
         else:
-            LOGGER.warning("Watcher thread stopped")
+            LOGGER.debug("Watcher thread stopped")
 
         self.queue = None
 
