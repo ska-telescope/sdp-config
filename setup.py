@@ -23,7 +23,7 @@ setuptools.setup(
     license='License :: OSI Approved :: BSD License',
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
-    url='http://gitlab.com/ska-telescope/sdp-config/',
+    url='http://gitlab.com/ska-telescope/sdp/ska-sdp-config/',
     install_requires=requirements_from('requirements.txt'),
     setup_requires=['pytest-runner'],
     tests_require=requirements_from('requirements-test.txt'),
