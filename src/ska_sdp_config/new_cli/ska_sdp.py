@@ -2,7 +2,7 @@
 Command line utility for interacting with SKA Science Data Processor (SDP).
 
 Usage:
-    ska-sdp COMMAND [options] SDP_OBJECT [<args>...]
+    ska-sdp COMMAND [options] [SDP_OBJECT] [<args>...]
     ska-sdp COMMAND (-h|--help)
     ska-sdp (-h|--help)
 
@@ -11,13 +11,26 @@ SDP Objects:
     workflow     Interact with available workflows
 
 Commands:
-    list     List information of object from the Configuration DB
+    list            List information of object from the Configuration DB
+    get | watch     Print all the information of a single key in the Config DB
+    create          Create a new, raw key-value pair in the Config DB
+    update          Update a raw key value from CLI
+    edit            Edit a raw key value from text editor
+    delete          Delete a single key or all keys within a path from the Config DB
+    process         Create a processing block to run a workflow
 """
 
 from docopt import docopt
 from ska_sdp_config import config
 
-import ska_sdp_config.new_cli.sdp_list as sdp_list
+from ska_sdp_config.new_cli import (
+    sdp_get,
+    sdp_create,
+    sdp_update,
+    sdp_list,
+    sdp_delete,
+    sdp_process,
+)
 
 
 def main(argv):
@@ -27,10 +40,26 @@ def main(argv):
     prefix = ""
     cfg = config.Config(global_prefix=prefix)
 
-    if args['COMMAND'] == "list":
+    if args["COMMAND"] == "list":
         sdp_list.main(argv, cfg)
 
+    if args["COMMAND"] == "get" or args["COMMAND"] == "watch":
+        sdp_get.main(argv, cfg)
 
-if __name__ == '__main__':
+    if args["COMMAND"] == "create":
+        sdp_create.main(argv, cfg)
+
+    if args["COMMAND"] == "update" or args["COMMAND"] == "edit":
+        sdp_update.main(argv, cfg)
+
+    if args["COMMAND"] == "delete":
+        sdp_delete.main(argv, cfg)
+
+    if args["COMMAND"] == "process":
+        sdp_process.main(argv, cfg)
+
+
+if __name__ == "__main__":
     import sys
+
     main(sys.argv[1:])

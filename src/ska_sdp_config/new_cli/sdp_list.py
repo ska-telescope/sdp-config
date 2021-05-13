@@ -1,17 +1,24 @@
 """
+List keys (and optionally values) within the Configuration Database.
+
 Usage:
+    ska-sdp list (-a | --all) <path>
     ska-sdp list [options] pb <path>
     ska-sdp list [options] workflow <path>
     ska-sdp list (-h | --help)
 
 Arguments:
-    <path>       Path within the Config DB. For root: /
+    <path>      Path within the Config DB. For root: /
 
 Options:
-    -h, --help   Show this screen
-    -q, --quiet  Cut back on unnecessary output
-    -R           Recursive list: list all subdirectories as well
+    -h, --help    Show this screen
+    -q, --quiet   Cut back on unnecessary output
+    -a, --all     List all of the keys within a path, regardless of object type
+    -v, --values  List all the values belonging to a key in the config db; default: False
 """
+
+# For now take it out as an option, it's set to True by default, without it listing doesn't work well
+#     -R           Recursive list: list all subdirectories as well
 
 from docopt import docopt
 
@@ -24,10 +31,19 @@ def main(argv, config):
     #   --> see cli.py
     args = docopt(__doc__, argv=argv)
 
-    pb = args["pb"]
-    workflow = args["workflow"]
+    object_dict = {"pb": args["pb"], "workflow": args["workflow"]}
 
-    args["values"] = "pb" if pb else "workflow"
+    args["-R"] = True
+    args["values"] = args["--values"]
+
+    path = args["<path>"]
+    if path[-1] != "/":
+        path = path + "/"
+
+    for k, v in object_dict.items():
+        if v:
+            path = path + k
+            break  # only one can be true, or none
 
     for txn in config.txn():
-        cmd_list(txn, args["<path>"], args)
+        cmd_list(txn, path, args)
