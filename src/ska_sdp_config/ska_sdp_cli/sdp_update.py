@@ -36,12 +36,13 @@ def main(argv, config):
     # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
     #   --> see cli.py
     args = docopt(__doc__, argv=argv)
+    key = args["<key>"]
 
     for txn in config.txn():
         if args["update"]:
-            cmd_update(txn, args["<key>"], args["<value>"], args)
+            cmd_update(txn, key, args["<value>"], args)
 
         if args["edit"]:
-            cmd_edit(txn, args["<key>"])
+            cmd_edit(txn, key)
 
-    LOG.info("%s updated.", args["<key>"])
+    LOG.info("%s updated.", key)

@@ -25,7 +25,7 @@ import sys
 from docopt import docopt
 from ska_sdp_config import config
 
-from ska_sdp_config.new_cli import (
+from ska_sdp_config.ska_sdp_cli import (
     sdp_get,
     sdp_create,
     sdp_update,
@@ -38,6 +38,8 @@ LOG = logging.getLogger("ska-sdp")
 LOG.setLevel(logging.INFO)
 LOG.addHandler(logging.StreamHandler(sys.stdout))
 
+COMMAND = "COMMAND"
+
 
 def main(argv):
     args = docopt(__doc__, argv=argv, options_first=True)
@@ -46,22 +48,22 @@ def main(argv):
     prefix = ""
     cfg = config.Config(global_prefix=prefix)
 
-    if args["COMMAND"] == "list":
+    if args[COMMAND] == "list":
         sdp_list.main(argv, cfg)
 
-    if args["COMMAND"] == "get" or args["COMMAND"] == "watch":
+    if args[COMMAND] == "get" or args[COMMAND] == "watch":
         sdp_get.main(argv, cfg)
 
-    if args["COMMAND"] == "create":
+    if args[COMMAND] == "create":
         sdp_create.main(argv, cfg)
 
-    if args["COMMAND"] == "update" or args["COMMAND"] == "edit":
+    if args[COMMAND] == "update" or args[COMMAND] == "edit":
         sdp_update.main(argv, cfg)
 
-    if args["COMMAND"] == "delete":
+    if args[COMMAND] == "delete":
         sdp_delete.main(argv, cfg)
 
-    if args["COMMAND"] == "process":
+    if args[COMMAND] == "process":
         sdp_process.main(argv, cfg)
 
 
