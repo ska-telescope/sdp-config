@@ -23,13 +23,12 @@ Note:
                 Recommended: vi, vim, nano (i.e. command line-based editors)
         Example: EDITOR=vi ska-sdp edit <key>
 """
-
-# For now take it out as an option, it's set to True by default, without it listing doesn't work well
-#     -R           Recursive list: list all subdirectories as well
+import logging
 
 from docopt import docopt
-
 from ska_sdp_config.cli import cmd_update, cmd_edit
+
+LOG = logging.getLogger("ska-sdp")
 
 
 def main(argv, config):
@@ -44,3 +43,5 @@ def main(argv, config):
 
         if args["edit"]:
             cmd_edit(txn, args["<key>"])
+
+    LOG.info("%s updated.", args["<key>"])

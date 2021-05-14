@@ -21,7 +21,6 @@ Options:
 #     -R           Recursive list: list all subdirectories as well
 
 from docopt import docopt
-
 from ska_sdp_config.cli import cmd_list
 
 

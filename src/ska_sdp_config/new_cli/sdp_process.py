@@ -13,15 +13,12 @@ Options:
     -h, --help    Show this screen
     -q, --quiet   Cut back on unnecessary output
 """
-import sys
 import logging
 
 from docopt import docopt
 from ska_sdp_config.cli import cmd_create_pb
 
-LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.INFO)
-LOG.addHandler(logging.StreamHandler(sys.stdout))
+LOG = logging.getLogger("ska-sdp")
 
 
 def main(argv, config):
@@ -40,4 +37,6 @@ def main(argv, config):
         workflow = {"type": workflow[0], "id": workflow[1], "version": workflow[2]}
 
     for txn in config.txn():
-        cmd_create_pb(txn, workflow, args["<parameters>"], args)
+        pb_id = cmd_create_pb(txn, workflow, args["<parameters>"], args)
+
+    LOG.info("OK; pb_id: %s", pb_id)

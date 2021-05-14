@@ -36,16 +36,21 @@ import json
 import subprocess
 import docopt
 import yaml
+import logging
 from ska_sdp_config import config, entity
+
+LOG = logging.getLogger("sdpcfg")
+LOG.setLevel(logging.INFO)
+LOG.addHandler(logging.StreamHandler(sys.stdout))
 
 
 def cmd_get(txn, path, args):
     """Get raw value from database."""
     val = txn.raw.get(path)
     if args['--quiet']:
-        print(val)
+        LOG.info(val)
     else:
-        print("{} = {}".format(path, val))
+        LOG.info("{} = {}".format(path, val))
 
 
 def cmd_list(txn, path, args):
@@ -55,18 +60,18 @@ def cmd_list(txn, path, args):
     if args['--quiet']:
         if args['values']:
             values = [txn.raw.get(key) for key in keys]
-            print(" ".join(values))
+            LOG.info(" ".join(values))
         else:
-            print(" ".join(keys))
+            LOG.info(" ".join(keys))
     else:
-        print("Keys with {} prefix:".format(path))
+        LOG.info("Keys with {} prefix:".format(path))
         if args['values']:
             for key in keys:
                 value = txn.raw.get(key)
-                print("{} = {}".format(key, value))
+                LOG.info("{} = {}".format(key, value))
         else:
             for key in keys:
-                print(key)
+                LOG.info(key)
 
 
 def cmd_create(txn, path, value, _args):
@@ -97,22 +102,22 @@ def cmd_edit(txn, path):
     # Write to temporary file
     with tempfile.NamedTemporaryFile(
             'w', suffix=('.yml' if have_yaml else '.dat'),
-            prefix=os.path.basename(path), delete=False) as tmp:
+            prefix=os.path.basename(path), delete=True) as tmp:
         print(val_in, file=tmp, flush=True)
         fname = tmp.name
 
-    # Start editor
-    subprocess.call([os.environ['EDITOR'] + " " + fname], shell=True)
+        # Start editor
+        subprocess.call([os.environ['EDITOR'] + " " + fname], shell=True)
 
-    # Read new value in
-    with open(fname) as tmp:
-        new_val = tmp.read()
-    if have_yaml:
-        new_val = config.dict_to_json(yaml.safe_load(new_val))
+        # Read new value in
+        with open(fname) as tmp2:
+            new_val = tmp2.read()
+        if have_yaml:
+            new_val = config.dict_to_json(yaml.safe_load(new_val))
 
     # Apply update
     if new_val == val:
-        print("No change!")
+        LOG.info("No change!")
     else:
         txn.raw.update(path, new_val)
 
@@ -122,7 +127,7 @@ def cmd_delete(txn, path, args):
     if args['-R']:
         for key in txn.raw.list_keys(path, recurse=8):
             if not args['--quiet']:
-                print(key)
+                LOG.info(key)
             txn.raw.delete(key)
     else:
         txn.raw.delete(path)
@@ -224,9 +229,9 @@ def cmd(args, path, value, workflow, parameters):
         if not args['--quiet']:
             if args['create'] or args['update'] or args['delete'] or \
                args['edit']:
-                print("OK")
+                LOG.info("OK")
             if args['process']:
-                print("OK, pb_id = {}".format(pb_id))
+                LOG.info("OK, pb_id = {}".format(pb_id))
 
     except KeyboardInterrupt:
         if not args['watch']:

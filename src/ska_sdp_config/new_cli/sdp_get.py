@@ -15,7 +15,6 @@ Options:
     -q, --quiet   Cut back on unnecessary output
 """
 from docopt import docopt
-
 from ska_sdp_config.cli import cmd_get
 
 

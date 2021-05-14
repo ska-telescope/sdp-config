@@ -17,13 +17,12 @@ Options:
     -h, --help    Show this screen
     -q, --quiet   Cut back on unnecessary output
 """
-
-# For now take it out as an option, it's set to True by default, without it listing doesn't work well
-
+import logging
 
 from docopt import docopt
-
 from ska_sdp_config.cli import cmd_delete
+
+LOG = logging.getLogger("ska-sdp")
 
 
 def main(argv, config):
@@ -32,6 +31,7 @@ def main(argv, config):
     #   --> see cli.py
     # TODO: needs confirmation before deleting more than a single key
     # TODO: should we all for deleting all workflows? (pbs?)
+    # TODO: what is the difference between deleting a path and deleting recursively? it does the same, no?
     args = docopt(__doc__, argv=argv)
 
     object_dict = {"pb": args["pb"], "workflow": args["workflow"]}
@@ -46,3 +46,5 @@ def main(argv, config):
 
     for txn in config.txn():
         cmd_delete(txn, path, args)
+
+    LOG.info("Deleted above keys in path %s.", path)

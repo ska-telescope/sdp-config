@@ -15,14 +15,17 @@ Options:
     -q, --quiet   Cut back on unnecessary output
 
 Example:
-    ska-sdp create pb my_new_pb '{test: true}'
+    ska-sdp create pb my_new_pb '{"test": true}'
     Result in the config db:
         key: /pb/my_new_pb
-        value: {test: true}
+        value: {"test": true}
 """
-from docopt import docopt
+import logging
 
+from docopt import docopt
 from ska_sdp_config.cli import cmd_create
+
+LOG = logging.getLogger("ska-sdp")
 
 
 def main(argv, config):
@@ -46,3 +49,5 @@ def main(argv, config):
 
     for txn in config.txn():
         cmd_create(txn, path, args["<value>"], args)
+
+    LOG.info("%s created", path)

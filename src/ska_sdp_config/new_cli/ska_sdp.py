@@ -8,7 +8,7 @@ Usage:
 
 SDP Objects:
     pb           Interact with processing blocks
-    workflow     Interact with available workflows
+    workflow     Interact with available workflow definitions
 
 Commands:
     list            List information of object from the Configuration DB
@@ -19,6 +19,8 @@ Commands:
     delete          Delete a single key or all keys within a path from the Config DB
     process         Create a processing block to run a workflow
 """
+import logging
+import sys
 
 from docopt import docopt
 from ska_sdp_config import config
@@ -31,6 +33,10 @@ from ska_sdp_config.new_cli import (
     sdp_delete,
     sdp_process,
 )
+
+LOG = logging.getLogger("ska-sdp")
+LOG.setLevel(logging.INFO)
+LOG.addHandler(logging.StreamHandler(sys.stdout))
 
 
 def main(argv):
