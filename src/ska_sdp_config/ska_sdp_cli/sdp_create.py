@@ -21,11 +21,21 @@ Example:
         value: {"test": true}
 """
 import logging
-
 from docopt import docopt
-from ska_sdp_config.cli import cmd_create
 
 LOG = logging.getLogger("ska-sdp")
+
+
+def cmd_create(txn, path, value, _args):
+    """
+    Create raw key.
+
+    :param txn: Config object transaction
+    :param path: key to create / path within the config db to be created TODO: rename to key?
+    :param value: value of new key to be added
+    :param _args: CLI input args TODO: remove, not used, why is it here?
+    """
+    txn.raw.create(path, value)
 
 
 def main(argv, config):

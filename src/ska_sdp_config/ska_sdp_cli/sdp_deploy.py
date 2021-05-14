@@ -11,8 +11,15 @@ Options:
     -h, --help    Show this screen
     -q, --quiet   Cut back on unnecessary output
 """
+import yaml
 from docopt import docopt
-from ska_sdp_config.cli import cmd_deploy
+from ska_sdp_config import entity
+
+
+def cmd_deploy(txn, typ, deploy_id, parameters):
+    """Create a deployment."""
+    dct = yaml.safe_load(parameters)
+    txn.create_deployment(entity.Deployment(deploy_id, typ, dct))
 
 
 def main(argv, config):

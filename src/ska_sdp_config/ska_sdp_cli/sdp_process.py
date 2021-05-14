@@ -14,11 +14,35 @@ Options:
     -q, --quiet   Cut back on unnecessary output
 """
 import logging
+import yaml
 
 from docopt import docopt
-from ska_sdp_config.cli import cmd_create_pb
+from ska_sdp_config import entity
 
 LOG = logging.getLogger("ska-sdp")
+
+
+def cmd_create_pb(txn, workflow, parameters, _args):
+    """
+    Create a processing block to run a workflow.
+
+    :param txn: Config object transaction
+    :param workflow: dict of workflow information: type, id, version
+    :param parameters: dict of workflow parameters, it can be None
+    :param _args: CLI input args TODO: remove, not used
+    """
+    # Parse parameters
+    if parameters is not None:
+        pars = yaml.safe_load(parameters)
+    else:
+        pars = {}
+
+    # Create new processing block ID, create processing block
+    pb_id = txn.new_processing_block_id("sdpcfg")
+    txn.create_processing_block(
+        entity.ProcessingBlock(pb_id, None, workflow, parameters=pars)
+    )
+    return pb_id
 
 
 def main(argv, config):

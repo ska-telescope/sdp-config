@@ -18,11 +18,26 @@ Options:
     -q, --quiet   Cut back on unnecessary output
 """
 import logging
-
 from docopt import docopt
-from ska_sdp_config.cli import cmd_delete
 
 LOG = logging.getLogger("ska-sdp")
+
+
+def cmd_delete(txn, path, args):
+    """
+    Delete a key from the Config DB.
+
+    :param txn: Config object transaction
+    :param path: path within the config db to delete
+    :param args: CLI input args
+    """
+    if args["-R"]:
+        for key in txn.raw.list_keys(path, recurse=8):
+            if not args["--quiet"]:
+                LOG.info(key)
+            txn.raw.delete(key)
+    else:
+        txn.raw.delete(path)
 
 
 def main(argv, config):

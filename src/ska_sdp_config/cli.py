@@ -28,130 +28,23 @@ Environment Variables:
 # pylint: disable=assignment-from-no-return
 # pylint: disable=too-many-branches
 
-import os
 import sys
 import re
-import tempfile
-import json
-import subprocess
 import docopt
-import yaml
 import logging
-from ska_sdp_config import config, entity
+from ska_sdp_config import config
+from ska_sdp_config.ska_sdp_cli.sdp_create import cmd_create
+from ska_sdp_config.ska_sdp_cli.sdp_delete import cmd_delete
+from ska_sdp_config.ska_sdp_cli.sdp_deploy import cmd_deploy
+from ska_sdp_config.ska_sdp_cli.sdp_get import cmd_get
+from ska_sdp_config.ska_sdp_cli.sdp_list import cmd_list
+from ska_sdp_config.ska_sdp_cli.sdp_process import cmd_create_pb
+from ska_sdp_config.ska_sdp_cli.sdp_update import cmd_update, cmd_edit
 
-LOG = logging.getLogger("sdpcfg")
+# because functions are migrated to the new cli files, the logger name had to be updated
+LOG = logging.getLogger("ska-sdp")
 LOG.setLevel(logging.INFO)
 LOG.addHandler(logging.StreamHandler(sys.stdout))
-
-
-def cmd_get(txn, path, args):
-    """Get raw value from database."""
-    val = txn.raw.get(path)
-    if args['--quiet']:
-        LOG.info(val)
-    else:
-        LOG.info("{} = {}".format(path, val))
-
-
-def cmd_list(txn, path, args):
-    """List raw keys/values from database."""
-    recurse = (8 if args['-R'] else 0)
-    keys = txn.raw.list_keys(path, recurse=recurse)
-    if args['--quiet']:
-        if args['values']:
-            values = [txn.raw.get(key) for key in keys]
-            LOG.info(" ".join(values))
-        else:
-            LOG.info(" ".join(keys))
-    else:
-        LOG.info("Keys with {} prefix:".format(path))
-        if args['values']:
-            for key in keys:
-                value = txn.raw.get(key)
-                LOG.info("{} = {}".format(key, value))
-        else:
-            for key in keys:
-                LOG.info(key)
-
-
-def cmd_create(txn, path, value, _args):
-    """Create raw key."""
-    txn.raw.create(path, value)
-
-
-def cmd_update(txn, path, value, _args):
-    """Update raw key value."""
-    txn.raw.update(path, value)
-
-
-def cmd_edit(txn, path):
-    """Edit the value of a raw key."""
-    val = txn.raw.get(path)
-    try:
-
-        # Attempt translation to YAML
-        val_dict = json.loads(val)
-        val_in = yaml.dump(val_dict)
-        have_yaml = True
-
-    except json.JSONDecodeError:
-
-        val_in = val
-        have_yaml = False
-
-    # Write to temporary file
-    with tempfile.NamedTemporaryFile(
-            'w', suffix=('.yml' if have_yaml else '.dat'),
-            prefix=os.path.basename(path), delete=True) as tmp:
-        print(val_in, file=tmp, flush=True)
-        fname = tmp.name
-
-        # Start editor
-        subprocess.call([os.environ['EDITOR'] + " " + fname], shell=True)
-
-        # Read new value in
-        with open(fname) as tmp2:
-            new_val = tmp2.read()
-        if have_yaml:
-            new_val = config.dict_to_json(yaml.safe_load(new_val))
-
-    # Apply update
-    if new_val == val:
-        LOG.info("No change!")
-    else:
-        txn.raw.update(path, new_val)
-
-
-def cmd_delete(txn, path, args):
-    """Delete a key."""
-    if args['-R']:
-        for key in txn.raw.list_keys(path, recurse=8):
-            if not args['--quiet']:
-                LOG.info(key)
-            txn.raw.delete(key)
-    else:
-        txn.raw.delete(path)
-
-
-def cmd_create_pb(txn, workflow, parameters, _args):
-    """Create a processing block."""
-    # Parse parameters
-    if parameters is not None:
-        pars = yaml.safe_load(parameters)
-    else:
-        pars = {}
-
-    # Create new processing block ID, create processing block
-    pb_id = txn.new_processing_block_id('sdpcfg')
-    txn.create_processing_block(entity.ProcessingBlock(
-        pb_id, None, workflow, parameters=pars))
-    return pb_id
-
-
-def cmd_deploy(txn, typ, deploy_id, parameters):
-    """Create a deployment."""
-    dct = yaml.safe_load(parameters)
-    txn.create_deployment(entity.Deployment(deploy_id, typ, dct))
 
 
 def main(argv):

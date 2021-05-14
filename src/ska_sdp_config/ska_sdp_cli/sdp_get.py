@@ -14,8 +14,25 @@ Options:
     -h, --help    Show this screen
     -q, --quiet   Cut back on unnecessary output
 """
+import logging
 from docopt import docopt
-from ska_sdp_config.cli import cmd_get
+
+LOG = logging.getLogger("ska-sdp")
+
+
+def cmd_get(txn, path, args):
+    """
+    Get raw value from database.
+
+    :param txn: Config object transaction
+    :param path: Full path (i.e. key) within the config db to get the values of TODO: maybe rename to key?
+    :param args: CLI input args
+    """
+    val = txn.raw.get(path)
+    if args["--quiet"]:
+        LOG.info(val)
+    else:
+        LOG.info("{} = {}".format(path, val))
 
 
 def main(argv, config):

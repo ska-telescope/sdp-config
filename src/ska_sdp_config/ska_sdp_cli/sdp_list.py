@@ -19,9 +19,37 @@ Options:
 
 # For now take it out as an option, it's set to True by default, without it listing doesn't work well
 #     -R           Recursive list: list all subdirectories as well
-
+import logging
 from docopt import docopt
-from ska_sdp_config.cli import cmd_list
+
+LOG = logging.getLogger("ska-sdp")
+
+
+def cmd_list(txn, path, args):
+    """
+    List raw keys/values from database.
+
+    :param txn: Config object transaction
+    :param path: path within the config db to list contents of
+    :param args: CLI input args
+    """
+    recurse = 8 if args["-R"] else 0
+    keys = txn.raw.list_keys(path, recurse=recurse)
+    if args["--quiet"]:
+        if args["values"]:
+            values = [txn.raw.get(key) for key in keys]
+            LOG.info(" ".join(values))
+        else:
+            LOG.info(" ".join(keys))
+    else:
+        LOG.info("Keys with {} prefix:".format(path))
+        if args["values"]:
+            for key in keys:
+                value = txn.raw.get(key)
+                LOG.info("{} = {}".format(key, value))
+        else:
+            for key in keys:
+                LOG.info(key)
 
 
 def main(argv, config):

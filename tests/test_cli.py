@@ -9,7 +9,12 @@ from unittest.mock import patch, call
 import pytest
 
 from ska_sdp_config import cli, config, ConfigCollision
-from ska_sdp_config.cli import cmd_get, cmd_list, cmd_create, cmd_update, cmd_delete, cmd_create_pb
+from ska_sdp_config.ska_sdp_cli.sdp_process import cmd_create_pb
+from ska_sdp_config.ska_sdp_cli.sdp_delete import cmd_delete
+from ska_sdp_config.ska_sdp_cli.sdp_update import cmd_update
+from ska_sdp_config.ska_sdp_cli.sdp_create import cmd_create
+from ska_sdp_config.ska_sdp_cli.sdp_list import cmd_list
+from ska_sdp_config.ska_sdp_cli.sdp_get import cmd_get
 from tests.test_backend_etcd3 import PREFIX as etcd_prefix
 
 # fixture, do not delete
