@@ -30,6 +30,12 @@ def _test_cli_command(capsys, argv,
         assert err == expected_stderr
 
 
+def _delete_test_pb():
+    cfg = config.Config(global_prefix=PREFIX)
+    for txn in cfg.txn():
+        txn.raw.delete(PREFIX)
+
+
 def test_cli_simple(capsys):
 
     if os.getenv("SDP_TEST_HOST") is not None:
@@ -44,6 +50,8 @@ def test_cli_simple(capsys):
     _test_cli_command(capsys, ['get', PREFIX+'/test'], PREFIX+"/test = asd\n", "")
     _test_cli_command(capsys, ['-q', 'get', PREFIX+'/test'], "asd\n", "")
     _test_cli_command(capsys, ['delete', PREFIX+'/test'], "OK\n", "")
+
+    _delete_test_pb()
 
 
 def test_cli_simple2(capsys):
@@ -64,6 +72,8 @@ def test_cli_simple2(capsys):
                           date.today().strftime('%Y%m%d')), "")
     _test_cli_command(capsys, ['delete', PREFIX+'/test'], "OK\n", "")
     _test_cli_command(capsys, ['delete', PREFIX+'/foo'], "OK\n", "")
+
+    _delete_test_pb()
 
 
 @pytest.fixture
