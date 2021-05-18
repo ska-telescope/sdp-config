@@ -9,6 +9,8 @@ Usage:
 SDP Objects:
     pb           Interact with processing blocks
     workflow     Interact with available workflow definitions
+    deployment
+    sbi          Interact with scheduling block instances
 
 Commands:
     list            List information of object from the Configuration DB
@@ -17,7 +19,7 @@ Commands:
     update          Update a raw key value from CLI
     edit            Edit a raw key value from text editor
     delete          Delete a single key or all keys within a path from the Config DB
-    process         Create a processing block to run a workflow
+    import          Import workflow definitions from file or URL (only works with 'workflow' SDP Object)
 """
 import logging
 import sys
@@ -31,7 +33,6 @@ from ska_sdp_config.ska_sdp_cli import (
     sdp_update,
     sdp_list,
     sdp_delete,
-    sdp_process,
 )
 
 LOG = logging.getLogger("ska-sdp")
@@ -62,9 +63,6 @@ def main(argv):
 
     if args[COMMAND] == "delete":
         sdp_delete.main(argv, cfg)
-
-    if args[COMMAND] == "process":
-        sdp_process.main(argv, cfg)
 
 
 if __name__ == "__main__":

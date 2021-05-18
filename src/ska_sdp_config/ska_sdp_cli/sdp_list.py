@@ -2,18 +2,22 @@
 List keys (and optionally values) within the Configuration Database.
 
 Usage:
-    ska-sdp list (-a | --all) <path>
-    ska-sdp list [options] pb <path>
-    ska-sdp list [options] workflow <path>
-    ska-sdp list (-h | --help)
+    ska-sdp list (-a |--all)
+    ska-sdp list [options] pb [<date>]
+    ska-sdp list [options] workflow [<type>]
+    ska-sdp list [options] (deployment|sbi)
+    ska-sdp list (-h|--help)
 
 Arguments:
-    <path>      Path within the Config DB. For root: /
+    <date>      Date on which the processing block(s) were created. Expected format: YYYYMMDD
+                If not provided, all pbs are listed.
+    <type>      Type of workflow definition. Batch or realtime.
+                If not provided, all workflows are listed.
 
 Options:
     -h, --help    Show this screen
     -q, --quiet   Cut back on unnecessary output
-    -a, --all     List all of the keys within a path, regardless of object type
+    -a, --all     List the contents of the Config DB, regardless of object type
     -v, --values  List all the values belonging to a key in the config db; default: False
 """
 
@@ -35,21 +39,24 @@ def cmd_list(txn, path, args):
     """
     recurse = 8 if args["-R"] else 0
     keys = txn.raw.list_keys(path, recurse=recurse)
+
     if args["--quiet"]:
         if args["values"]:
             values = [txn.raw.get(key) for key in keys]
-            LOG.info(" ".join(values))
+            return values
         else:
-            LOG.info(" ".join(keys))
+            return keys
     else:
         LOG.info("Keys with {} prefix:".format(path))
         if args["values"]:
+            to_list = []
             for key in keys:
                 value = txn.raw.get(key)
-                LOG.info("{} = {}".format(key, value))
+                to_list.append(f"{key} = {value}")
+            return to_list
+
         else:
-            for key in keys:
-                LOG.info(key)
+            return keys
 
 
 def main(argv, config):
@@ -58,19 +65,35 @@ def main(argv, config):
     #   --> see cli.py
     args = docopt(__doc__, argv=argv)
 
-    object_dict = {"pb": args["pb"], "workflow": args["workflow"]}
+    object_dict = {
+        "pb": args["pb"],
+        "workflow": args["workflow"],
+        "deployment": args["deployment"],
+        "sbi": args["sbi"],
+    }
 
     args["-R"] = True
     args["values"] = args["--values"]
 
-    path = args["<path>"]
-    if path[-1] != "/":
-        path = path + "/"
-
+    path = "/"
     for k, v in object_dict.items():
         if v:
             path = path + k
             break  # only one can be true, or none
 
     for txn in config.txn():
-        cmd_list(txn, path, args)
+        listed_objects = cmd_list(txn, path, args)
+
+    if args["pb"] and args["<date>"]:
+        for elem in listed_objects:
+            if args["<date>"] in elem:
+                LOG.info(elem)
+
+    elif args["workflow"] and args["<type>"]:
+        for elem in listed_objects:
+            if args["<type>"].lower() in elem:
+                LOG.info(elem)
+
+    else:
+        for elem in listed_objects:
+            LOG.info(elem)

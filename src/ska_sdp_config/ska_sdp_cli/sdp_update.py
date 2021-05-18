@@ -3,15 +3,18 @@ Update the value of a single key (full path in the Configuration Database).
 Can either update from CLI, or edit via a text editor.
 
 Usage:
-    ska-sdp update [options] <key> <value>
-    ska-sdp edit <key>
-    ska-sdp (update | edit) (-h | --help)
+    ska-sdp update [options] pb-state <pb-id> <value>
+    ska-sdp update [options] (workflow|sbi|deployment) <key> <value>
+    ska-sdp edit (workflow|sbi|deployment) <key>
+    ska-sdp edit pb-state <pb-id>
+    ska-sdp (update|edit) (-h|--help)
 
 Arguments:
-    <key>       Key within the Config DB. Has to be the full path.
+    <key>       Key within the Config DB. Cannot be a processing block related key.
                 To get the list of all keys:
-                    ska-sdp list -a /
-    <value>     Value to update the Key with.
+                    ska-sdp list -a
+    <pb-id>     Processing block id whose state is to be changed.
+    <value>     Value to update the key/pb state with.
 
 Options:
     -h, --help    Show this screen
@@ -22,6 +25,7 @@ Note:
         EDITOR: Has to match the executable of an existing text editor
                 Recommended: vi, vim, nano (i.e. command line-based editors)
         Example: EDITOR=vi ska-sdp edit <key>
+    Processing blocks cannot be changed, apart from their state.
 """
 import json
 import logging
@@ -101,6 +105,9 @@ def main(argv, config):
     #   --> see cli.py
     args = docopt(__doc__, argv=argv)
     key = args["<key>"]
+
+    if args["pb-state"]:
+        key = f"/pb/{args['<pb-id>']}/state"
 
     for txn in config.txn():
         if args["update"]:

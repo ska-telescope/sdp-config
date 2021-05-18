@@ -2,18 +2,16 @@
 Delete a key from the Configuration Database.
 
 Usage:
-    ska-sdp delete (-a | --all) (pb | workflow)
-    ska-sdp delete [-R -q] <path>
-    ska-sdp delete (-h | --help)
+    ska-sdp delete (-a|--all) (pb|workflow|sbi|deployment)
+    ska-sdp delete [options] (pb|sbi|deployment) <id>
+    ska-sdp delete [options] workflow <workflow>
+    ska-sdp delete (-h|--help)
 
 Arguments:
-    <path>        Path within the Config DB. For root: /
+    <id>        Id of the processing block, or deployment, or scheduling block instance to be deleted
+    <workflow>  Workflow definition to be deleted. Expected format: type:id:version
 
 Options:
-    -R            Recursive delete: delete everything within given path
-                  If -R is not used, <path> has to match the exact key (full path) that has to be deleted
-                  To get the list of all keys:
-                    ska-sdp list -a /
     -h, --help    Show this screen
     -q, --quiet   Cut back on unnecessary output
 """
@@ -49,17 +47,39 @@ def main(argv, config):
     # TODO: what is the difference between deleting a path and deleting recursively? it does the same, no?
     args = docopt(__doc__, argv=argv)
 
-    object_dict = {"pb": args["pb"], "workflow": args["workflow"]}
+    object_dict = {
+        "pb": args["pb"],
+        "workflow": args["workflow"],
+        "deployment": args["deployment"],
+        "sbi": args["sbi"],
+    }
 
-    path = args["<path>"]
+    args["-R"] = True
 
-    for k, v in object_dict.items():
-        if v:
-            path = "/" + k
-            args["-R"] = True
+    for sdp_object, exists in object_dict.items():
+        if exists:
+            if args["--all"] or args["-a"]:
+                LOG.warning(
+                    "You are attempting to delete all entries of type %s "
+                    "from the Configuration DB.",
+                    sdp_object,
+                )
+                cont = input("Continue? (yes, no) ")
+                if cont == "yes":
+                    path = "/" + sdp_object
+                else:
+                    LOG.info("Aborted")
+                    return
+
+            elif sdp_object == "workflow":
+                path = f"/workflow/{args['<workflow>']}"
+
+            else:
+                path = f"/{sdp_object}/{args['<id>']}"
+
             break  # only one can be true, or none
 
     for txn in config.txn():
         cmd_delete(txn, path, args)
 
-    LOG.info("Deleted above keys in path %s.", path)
+    LOG.info("Deleted above keys with prefix %s.", path)

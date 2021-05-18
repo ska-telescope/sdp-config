@@ -33,12 +33,10 @@ import re
 import docopt
 import logging
 from ska_sdp_config import config
-from ska_sdp_config.ska_sdp_cli.sdp_create import cmd_create
+from ska_sdp_config.ska_sdp_cli.sdp_create import cmd_create, cmd_create_pb, cmd_deploy
 from ska_sdp_config.ska_sdp_cli.sdp_delete import cmd_delete
-from ska_sdp_config.ska_sdp_cli.sdp_deploy import cmd_deploy
 from ska_sdp_config.ska_sdp_cli.sdp_get import cmd_get
 from ska_sdp_config.ska_sdp_cli.sdp_list import cmd_list
-from ska_sdp_config.ska_sdp_cli.sdp_process import cmd_create_pb
 from ska_sdp_config.ska_sdp_cli.sdp_update import cmd_update, cmd_edit
 
 # because functions are migrated to the new cli files, the logger name had to be updated
@@ -100,7 +98,9 @@ def cmd(args, path, value, workflow, parameters):
     try:
         for txn in cfg.txn():
             if args['ls'] or args['list']:
-                cmd_list(txn, path, args)
+                objects_in_db = cmd_list(txn, path, args)
+                for elem in objects_in_db:
+                    LOG.info(elem)
             elif args['watch'] or args['get']:
                 cmd_get(txn, path, args)
             elif args['create']:
