@@ -9,13 +9,14 @@ Usage:
 SDP Objects:
     pb           Interact with processing blocks
     workflow     Interact with available workflow definitions
-    deployment
+    deployment   Interact with deployments
     sbi          Interact with scheduling block instances
 
 Commands:
     list            List information of object from the Configuration DB
-    get | watch     Print all the information of a single key in the Config DB
-    create          Create a new, raw key-value pair in the Config DB
+    get | watch     Print all the information (i.e. value) of a key in the Config DB
+    create          Create a new, raw key-value pair in the Config DB;
+                    Run a workflow; Create a deployment
     update          Update a raw key value from CLI
     edit            Edit a raw key value from text editor
     delete          Delete a single key or all keys within a path from the Config DB
@@ -32,7 +33,7 @@ from ska_sdp_config.ska_sdp_cli import (
     sdp_create,
     sdp_update,
     sdp_list,
-    sdp_delete,
+    sdp_delete, sdp_import,
 )
 
 LOG = logging.getLogger("ska-sdp")
@@ -63,6 +64,9 @@ def main(argv):
 
     if args[COMMAND] == "delete":
         sdp_delete.main(argv, cfg)
+
+    if args[COMMAND] == "import":
+        sdp_import.main(argv, cfg)
 
 
 if __name__ == "__main__":

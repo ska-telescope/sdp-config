@@ -36,7 +36,7 @@ from ska_sdp_config import config
 from ska_sdp_config.ska_sdp_cli.sdp_create import cmd_create, cmd_create_pb, cmd_deploy
 from ska_sdp_config.ska_sdp_cli.sdp_delete import cmd_delete
 from ska_sdp_config.ska_sdp_cli.sdp_get import cmd_get
-from ska_sdp_config.ska_sdp_cli.sdp_list import cmd_list
+from ska_sdp_config.ska_sdp_cli.sdp_list import cmd_list, get_data_from_db
 from ska_sdp_config.ska_sdp_cli.sdp_update import cmd_update, cmd_edit
 
 # because functions are migrated to the new cli files, the logger name had to be updated
@@ -90,6 +90,25 @@ def main(argv):
     cmd(args, path, value, workflow, parameters)
 
 
+def _list_results(txn, path, args):
+    values_dict = get_data_from_db(txn, path, args)
+
+    if args["--quiet"]:
+        if args["values"]:
+            LOG.info(" ".join(values_dict.values()))
+        else:
+            LOG.info(" ".join(values_dict.keys()))
+
+    else:
+        LOG.info("Keys with {} prefix:".format(path))
+        if args["values"]:
+            for key, value in values_dict.items():
+                LOG.info(f"{key} = {value}")
+        else:
+            for key in values_dict.keys():
+                LOG.info(key)
+
+
 def cmd(args, path, value, workflow, parameters):
     """Execute command."""
     # Get configuration client, start transaction
@@ -98,9 +117,7 @@ def cmd(args, path, value, workflow, parameters):
     try:
         for txn in cfg.txn():
             if args['ls'] or args['list']:
-                objects_in_db = cmd_list(txn, path, args)
-                for elem in objects_in_db:
-                    LOG.info(elem)
+                _list_results(txn, path, args)
             elif args['watch'] or args['get']:
                 cmd_get(txn, path, args)
             elif args['create']:

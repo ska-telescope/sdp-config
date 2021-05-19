@@ -1,5 +1,5 @@
 """
-Get/Watch all information of a single key (full path in the Configuration Database).
+Get/Watch all information of a single key in the Configuration Database.
 
 Usage:
     ska-sdp (get|watch) [options] <key>

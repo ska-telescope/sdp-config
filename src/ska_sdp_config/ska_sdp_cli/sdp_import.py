@@ -6,7 +6,7 @@ Usage:
     ska-sdp import (-h|--help)
 
 Arguments:
-    <file-or-url>      File or URL to import workflows from.
+    <file-or-url>      File or URL to import workflow definitions from.
 
 Options:
     -h, --help    Show this screen
@@ -94,7 +94,7 @@ def _parse_flat(definitions):
     """
     Parse flat workflow definitions. TODO: what is "flat"?
 
-    :param definitions: structured workflow definitions
+    :param definitions: flat workflow definitions
     :returns: dictionary mapping (type, id, version) to definition.
 
     """
@@ -122,7 +122,7 @@ def parse_definitions(definitions: Dict) -> Dict:
 
 def import_workflows(txn, workflows: Dict, sync: bool = True):
     """
-    Import the workflow definitions into the configuration database.
+    Import the workflow definitions into the Configuration Database.
 
     :param txn: Config object transaction
     :param workflows: workflow definitions

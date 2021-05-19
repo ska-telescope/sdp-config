@@ -2,7 +2,7 @@
 List keys (and optionally values) within the Configuration Database.
 
 Usage:
-    ska-sdp list (-a |--all)
+    ska-sdp list (-a |--all) [options]
     ska-sdp list [options] pb [<date>]
     ska-sdp list [options] workflow [<type>]
     ska-sdp list [options] (deployment|sbi)
@@ -15,48 +15,77 @@ Arguments:
                 If not provided, all workflows are listed.
 
 Options:
-    -h, --help    Show this screen
-    -q, --quiet   Cut back on unnecessary output
-    -a, --all     List the contents of the Config DB, regardless of object type
-    -v, --values  List all the values belonging to a key in the config db; default: False
+    -h, --help         Show this screen
+    -q, --quiet        Cut back on unnecessary output
+    -a, --all          List the contents of the Config DB, regardless of object type
+    -v, --values       List all the values belonging to a key in the config db; default: False
+    --prefix=<prefix>  Path prefix for high-level API
 """
-
-# For now take it out as an option, it's set to True by default, without it listing doesn't work well
-#     -R           Recursive list: list all subdirectories as well
 import logging
 from docopt import docopt
 
 LOG = logging.getLogger("ska-sdp")
 
 
+def get_data_from_db(txn, path, args):
+    """Get all key-value pairs from Config DB path."""
+    recurse = 8 if args["-R"] else 0
+    keys = txn.raw.list_keys(path, recurse=recurse)
+    values_dict = {key: txn.raw.get(key) for key in keys}
+
+    return values_dict
+
+
+def _log_results(key, value, args):
+    """Log information based on user input arguments."""
+    quiet = args["--quiet"]
+    vals = args["--values"]
+
+    if quiet:
+        if vals:
+            LOG.info(value)
+        else:
+            LOG.info(key)
+    else:
+        if vals:
+            LOG.info(f"{key} = {value}")
+        else:
+            LOG.info(key)
+
+
 def cmd_list(txn, path, args):
     """
-    List raw keys/values from database.
+    List raw keys/values from database and log them into the console.
 
     :param txn: Config object transaction
     :param path: path within the config db to list contents of
     :param args: CLI input args
     """
-    recurse = 8 if args["-R"] else 0
-    keys = txn.raw.list_keys(path, recurse=recurse)
+    values_dict = get_data_from_db(txn, path, args)
+    quiet = args["--quiet"]
 
-    if args["--quiet"]:
-        if args["values"]:
-            values = [txn.raw.get(key) for key in keys]
-            return values
-        else:
-            return keys
+    if args["pb"] and args["<date>"]:
+        if not quiet:
+            LOG.info(f"Processing blocks for date {args['<date>']}: ")
+
+        for key, value in values_dict.items():
+            if args["<date>"] in key:
+                _log_results(key, value, args)
+
+    elif args["workflow"] and args["<type>"]:
+        if not quiet:
+            LOG.info(f"Workflow definitions of type {args['<type>']}: ")
+
+        for key, value in values_dict.items():
+            if args["<type>"].lower() in key:
+                _log_results(key, value, args)
+
     else:
-        LOG.info("Keys with {} prefix:".format(path))
-        if args["values"]:
-            to_list = []
-            for key in keys:
-                value = txn.raw.get(key)
-                to_list.append(f"{key} = {value}")
-            return to_list
+        if not quiet:
+            LOG.info(f"Keys with prefix {path}: ")
 
-        else:
-            return keys
+        for key, value in values_dict.items():
+            _log_results(key, value, args)
 
 
 def main(argv, config):
@@ -73,27 +102,16 @@ def main(argv, config):
     }
 
     args["-R"] = True
-    args["values"] = args["--values"]
 
-    path = "/"
+    if args["--prefix"]:
+        path = args["--prefix"].rstrip("/")+"/"
+    else:
+        path = "/"
+
     for k, v in object_dict.items():
         if v:
             path = path + k
             break  # only one can be true, or none
 
     for txn in config.txn():
-        listed_objects = cmd_list(txn, path, args)
-
-    if args["pb"] and args["<date>"]:
-        for elem in listed_objects:
-            if args["<date>"] in elem:
-                LOG.info(elem)
-
-    elif args["workflow"] and args["<type>"]:
-        for elem in listed_objects:
-            if args["<type>"].lower() in elem:
-                LOG.info(elem)
-
-    else:
-        for elem in listed_objects:
-            LOG.info(elem)
+        cmd_list(txn, path, args)

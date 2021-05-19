@@ -1,10 +1,10 @@
 """
-Update the value of a single key (full path in the Configuration Database).
+Update the value of a single key or processing block state.
 Can either update from CLI, or edit via a text editor.
 
 Usage:
-    ska-sdp update [options] pb-state <pb-id> <value>
     ska-sdp update [options] (workflow|sbi|deployment) <key> <value>
+    ska-sdp update [options] pb-state <pb-id> <value>
     ska-sdp edit (workflow|sbi|deployment) <key>
     ska-sdp edit pb-state <pb-id>
     ska-sdp (update|edit) (-h|--help)
@@ -40,27 +40,27 @@ from ska_sdp_config import config
 LOG = logging.getLogger("ska-sdp")
 
 
-def cmd_update(txn, path, value, _args):
+def cmd_update(txn, key, value, _args):
     """
     Update raw key value.
 
     :param txn: Config object transaction
-    :param path: path within the config db to update the value of, same as key TODO: rename input variable
+    :param key: Key in the Config DB to update the value of
     :param value: new value to update the key with
     :param _args: CLI input args TODO: remove this, it's not used..
     """
-    txn.raw.update(path, value)
+    txn.raw.update(key, value)
 
 
-def cmd_edit(txn, path):
+def cmd_edit(txn, key):
     """
     Edit the value of a raw key in a CLI text editor.
     Only works if the editor's executable is supplied through the EDITOR env. var.
 
     :param txn: Config object transaction
-    :param path: path within the config db to update/edit the value of, same as key TODO: rename input variable
+    :param key: Key in the Config DB to update the value of
     """
-    val = txn.raw.get(path)
+    val = txn.raw.get(key)
     try:
 
         # Attempt translation to YAML
@@ -77,7 +77,7 @@ def cmd_edit(txn, path):
     with tempfile.NamedTemporaryFile(
         "w",
         suffix=(".yml" if have_yaml else ".dat"),
-        prefix=os.path.basename(path),
+        prefix=os.path.basename(key),
         delete=True,
     ) as tmp:
         print(val_in, file=tmp, flush=True)
@@ -96,7 +96,7 @@ def cmd_edit(txn, path):
     if new_val == val:
         LOG.info("No change!")
     else:
-        txn.raw.update(path, new_val)
+        txn.raw.update(key, new_val)
 
 
 def main(argv, config):

@@ -1,6 +1,7 @@
 """
 Create a new, raw, key-value pair in the Configuration Database.
 Create a processing block to run a workflow.
+Create a deployment.
 
 Usage:
     ska-sdp create [options] pb <workflow> [<parameters>]
@@ -39,16 +40,16 @@ from ska_sdp_config import entity
 LOG = logging.getLogger("ska-sdp")
 
 
-def cmd_create(txn, path, value, _args):
+def cmd_create(txn, key, value, _args):
     """
     Create raw key.
 
     :param txn: Config object transaction
-    :param path: key to create / path within the config db to be created TODO: rename to key?
+    :param key: key within the config db to be created
     :param value: value of new key to be added
     :param _args: CLI input args TODO: remove, not used, why is it here?
     """
-    txn.raw.create(path, value)
+    txn.raw.create(key, value)
 
 
 def cmd_create_pb(txn, workflow, parameters, _args):
@@ -59,6 +60,8 @@ def cmd_create_pb(txn, workflow, parameters, _args):
     :param workflow: dict of workflow information: type, id, version
     :param parameters: dict of workflow parameters, it can be None
     :param _args: CLI input args TODO: remove, not used
+
+    :return pb_id: ID of the created processing block
     """
     # Parse parameters
     if parameters is not None:
@@ -75,7 +78,15 @@ def cmd_create_pb(txn, workflow, parameters, _args):
 
 
 def cmd_deploy(txn, typ, deploy_id, parameters):
-    """Create a deployment."""
+    """
+    Create a deployment.
+
+    :param txn: Config object transaction
+    :param typ: Type of the deployment, currently "helm" only
+    :param deploy_id: ID of the deployment
+    :param parameters: String of deployment parameters in the form of:
+                       '{"chart": <chart-name>, "values": <dict-of-values>}'
+    """
     dct = yaml.safe_load(parameters)
     txn.create_deployment(entity.Deployment(deploy_id, typ, dct))
 
@@ -84,7 +95,6 @@ def main(argv, config):
     # TODO: should config be an input, or can I define the object here?
     # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
     #   --> see cli.py
-    # TODO: should there be checks, things that should not be created?
     args = docopt(__doc__, argv=argv)
 
     object_dict = {"workflow": args["workflow"], "sbi": args["sbi"]}
@@ -107,13 +117,13 @@ def main(argv, config):
         for txn in config.txn():
             cmd_deploy(txn, args["<type>"], args["<deploy-id>"], args["<parameters>"])
 
-        LOG.info("Deployment created")
+        LOG.info("Deployment created with id: %s", args["<deploy-id>"])
         return
 
     path = "/"
-    for k, v in object_dict.items():
-        if v:
-            path = path + k
+    for sdp_object, exists in object_dict.items():
+        if exists:
+            path = path + sdp_object
             break  # only one can be true, or none
 
     path = path + "/" + args["<key>"]
