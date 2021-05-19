@@ -20,7 +20,7 @@ Commands:
     update          Update a raw key value from CLI
     edit            Edit a raw key value from text editor
     delete          Delete a single key or all keys within a path from the Config DB
-    import          Import workflow definitions from file or URL (only works with 'workflow' SDP Object)
+    import          Import workflow definitions from file or URL
 """
 import logging
 import sys
@@ -33,7 +33,8 @@ from ska_sdp_config.ska_sdp_cli import (
     sdp_create,
     sdp_update,
     sdp_list,
-    sdp_delete, sdp_import,
+    sdp_delete,
+    sdp_import,
 )
 
 LOG = logging.getLogger("ska-sdp")
@@ -44,6 +45,7 @@ COMMAND = "COMMAND"
 
 
 def main(argv):
+    """Run ska-sdp."""
     args = docopt(__doc__, argv=argv, options_first=True)
 
     # prefix = ('' if args['--prefix'] is None else args['--prefix'])
@@ -67,9 +69,3 @@ def main(argv):
 
     if args[COMMAND] == "import":
         sdp_import.main(argv, cfg)
-
-
-if __name__ == "__main__":
-    import sys
-
-    main(sys.argv[1:])

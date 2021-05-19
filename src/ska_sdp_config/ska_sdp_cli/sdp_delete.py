@@ -8,9 +8,9 @@ Usage:
     ska-sdp delete (-h|--help)
 
 Arguments:
-    <id>        Id of the processing block, or deployment, or scheduling block instance to be deleted
+    <id>        ID of the processing block, or deployment, or scheduling block instance
     <workflow>  Workflow definition to be deleted. Expected format: type:id:version
-    prefix      Use this "SDP Object" when deleting with a user-defined prefix, that is not object-specific
+    prefix      Use this "SDP Object" when deleting with a non-object-specific, user-defined prefix
 
 Options:
     -h, --help             Show this screen
@@ -41,6 +41,7 @@ def cmd_delete(txn, path, args):
 
 
 def main(argv, config):
+    """Run ska-sdp delete."""
     # TODO: should config be an input, or can I define the object here?
     # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
     #   --> see cli.py
@@ -55,7 +56,7 @@ def main(argv, config):
 
     args["-R"] = True
     if args["--prefix"]:
-        path = args["--prefix"].rstrip("/")+"/"
+        path = args["--prefix"].rstrip("/") + "/"
 
     for sdp_object, exists in object_dict.items():
         if exists:

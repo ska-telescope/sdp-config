@@ -10,10 +10,13 @@ Arguments:
 
 Options:
     -h, --help    Show this screen
-    --sync        Delete workflows not in the input TODO: should it be called delete? or maybe different definition?
+    --sync        Delete workflows not in the input
+        TODO: should it be called delete? or maybe different definition?
 
 TODO: add example of what the file should be like?
 """
+# pylint: disable=protected-access
+
 import logging
 import os
 from typing import Dict
@@ -26,30 +29,30 @@ LOG = logging.getLogger("ska-sdp")
 WORKFLOW_PREFIX = "workflow"
 
 
-def workflow_path(wf_type, wf_id, version):
+def _workflow_path(wf_type, wf_id, version):
     return f"/{WORKFLOW_PREFIX}/{wf_type}:{wf_id}:{version}"
 
 
-def list_workflows(txn):
+def _list_workflows(txn):
     keys = txn.raw.list_keys("/" + WORKFLOW_PREFIX)
     workflows = [tuple(k.split("/")[2].split(":")) for k in keys]
     return workflows
 
 
-def get_workflow(txn, wf_type, wf_id, version):
-    return txn._get(workflow_path(wf_type, wf_id, version))
+def _get_workflow(txn, wf_type, wf_id, version):
+    return txn._get(_workflow_path(wf_type, wf_id, version))
 
 
-def create_workflow(txn, wf_type, wf_id, version, workflow):
-    txn._create(workflow_path(wf_type, wf_id, version), workflow)
+def _create_workflow(txn, wf_type, wf_id, version, workflow):
+    txn._create(_workflow_path(wf_type, wf_id, version), workflow)
 
 
-def update_workflow(txn, wf_type, wf_id, version, workflow):
-    txn._update(workflow_path(wf_type, wf_id, version), workflow)
+def _update_workflow(txn, wf_type, wf_id, version, workflow):
+    txn._update(_workflow_path(wf_type, wf_id, version), workflow)
 
 
-def delete_workflow(txn, wf_type, wf_id, version):
-    txn.raw.delete(workflow_path(wf_type, wf_id, version))
+def _delete_workflow(txn, wf_type, wf_id, version):
+    txn.raw.delete(_workflow_path(wf_type, wf_id, version))
 
 
 def read_input(input_object: str) -> Dict:
@@ -129,35 +132,35 @@ def import_workflows(txn, workflows: Dict, sync: bool = True):
     :param sync: delete workflows not in the input
     """
     # Create sorted list of existing and new workflows
-    all_workflows = sorted(list(set(list_workflows(txn)) | set(workflows.keys())))
+    all_workflows = sorted(list(set(_list_workflows(txn)) | set(workflows.keys())))
     change = False
     for key in all_workflows:
         if key in workflows:
-            old_value = get_workflow(txn, *key)
+            old_value = _get_workflow(txn, *key)
             new_value = workflows[key]
             if old_value is None:
-                LOG.info("Creating", *key)
-                create_workflow(txn, *key, new_value)
+                LOG.info("Creating %s", key)
+                _create_workflow(txn, *key, new_value)
                 change = True
             elif new_value != old_value:
-                LOG.info("Updating", *key)
-                update_workflow(txn, *key, new_value)
+                LOG.info("Updating %s", key)
+                _update_workflow(txn, *key, new_value)
                 change = True
         elif sync:
-            LOG.info("Deleting", *key)
-            delete_workflow(txn, *key)
+            LOG.info("Deleting %s", key)
+            _delete_workflow(txn, *key)
             change = True
     if not change:
         LOG.info("No changes")
 
 
 def main(argv, config):
+    """Run ska-sdp import."""
     args = docopt(__doc__, argv=argv)
 
-    LOG.info("Importing workflow definitions from", args["<file-or-url>"])
+    LOG.info("Importing workflow definitions from %s", args["<file-or-url>"])
     definitions = read_input(args["<file-or-url>"])
     workflows = parse_definitions(definitions)
 
     for txn in config.txn():
         import_workflows(txn, workflows, sync=args["--sync"])
-

@@ -30,13 +30,13 @@ Environment Variables:
 
 import sys
 import re
-import docopt
 import logging
+import docopt
 from ska_sdp_config import config
 from ska_sdp_config.ska_sdp_cli.sdp_create import cmd_create, cmd_create_pb, cmd_deploy
 from ska_sdp_config.ska_sdp_cli.sdp_delete import cmd_delete
 from ska_sdp_config.ska_sdp_cli.sdp_get import cmd_get
-from ska_sdp_config.ska_sdp_cli.sdp_list import cmd_list, get_data_from_db
+from ska_sdp_config.ska_sdp_cli.sdp_list import get_data_from_db
 from ska_sdp_config.ska_sdp_cli.sdp_update import cmd_update, cmd_edit
 
 # because functions are migrated to the new cli files, the logger name had to be updated
@@ -100,10 +100,10 @@ def _list_results(txn, path, args):
             LOG.info(" ".join(values_dict.keys()))
 
     else:
-        LOG.info("Keys with {} prefix:".format(path))
+        LOG.info("Keys with %s prefix:", path)
         if args["values"]:
             for key, value in values_dict.items():
-                LOG.info(f"{key} = {value}")
+                LOG.info("%s = %s", key, value)
         else:
             for key in values_dict.keys():
                 LOG.info(key)
@@ -141,7 +141,7 @@ def cmd(args, path, value, workflow, parameters):
                args['edit']:
                 LOG.info("OK")
             if args['process']:
-                LOG.info("OK, pb_id = {}".format(pb_id))
+                LOG.info("OK, pb_id = %s", pb_id)
 
     except KeyboardInterrupt:
         if not args['watch']:

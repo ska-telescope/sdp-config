@@ -48,7 +48,7 @@ def _log_results(key, value, args):
             LOG.info(key)
     else:
         if vals:
-            LOG.info(f"{key} = {value}")
+            LOG.info("%s = %s", key, value)
         else:
             LOG.info(key)
 
@@ -66,7 +66,7 @@ def cmd_list(txn, path, args):
 
     if args["pb"] and args["<date>"]:
         if not quiet:
-            LOG.info(f"Processing blocks for date {args['<date>']}: ")
+            LOG.info("Processing blocks for date %s: ", args['<date>'])
 
         for key, value in values_dict.items():
             if args["<date>"] in key:
@@ -74,7 +74,7 @@ def cmd_list(txn, path, args):
 
     elif args["workflow"] and args["<type>"]:
         if not quiet:
-            LOG.info(f"Workflow definitions of type {args['<type>']}: ")
+            LOG.info("Workflow definitions of type %s: ", args['<type>'])
 
         for key, value in values_dict.items():
             if args["<type>"].lower() in key:
@@ -82,13 +82,14 @@ def cmd_list(txn, path, args):
 
     else:
         if not quiet:
-            LOG.info(f"Keys with prefix {path}: ")
+            LOG.info("Keys with prefix %s: ", path)
 
         for key, value in values_dict.items():
             _log_results(key, value, args)
 
 
 def main(argv, config):
+    """Run ska-sdp list."""
     # TODO: should config be an input, or can I define the object here?
     # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
     #   --> see cli.py
@@ -104,13 +105,13 @@ def main(argv, config):
     args["-R"] = True
 
     if args["--prefix"]:
-        path = args["--prefix"].rstrip("/")+"/"
+        path = args["--prefix"].rstrip("/") + "/"
     else:
         path = "/"
 
-    for k, v in object_dict.items():
-        if v:
-            path = path + k
+    for sdp_object, exists in object_dict.items():
+        if exists:
+            path = path + sdp_object
             break  # only one can be true, or none
 
     for txn in config.txn():

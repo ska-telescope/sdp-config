@@ -35,10 +35,11 @@ def cmd_get(txn, key, args):
     if args["--quiet"]:
         LOG.info(val)
     else:
-        LOG.info("{} = {}".format(key, val))
+        LOG.info("%s = %s", key, val)
 
 
 def main(argv, config):
+    """Run ska-sdp get."""
     # TODO: should config be an input, or can I define the object here?
     # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
     #   --> see cli.py

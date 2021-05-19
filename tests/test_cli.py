@@ -1,6 +1,9 @@
 """Tests for sdpcfg command line utility."""
 
 # pylint: disable=missing-docstring
+# pylint: disable=redefined-outer-name
+# pylint: disable=unused-import
+
 import json
 import os
 from datetime import date
@@ -10,7 +13,6 @@ import pytest
 
 from ska_sdp_config import cli, config, ConfigCollision, ConfigVanished
 from ska_sdp_config.ska_sdp_cli.sdp_delete import cmd_delete
-from ska_sdp_config.ska_sdp_cli.sdp_import import parse_definitions
 from ska_sdp_config.ska_sdp_cli.sdp_update import cmd_update
 from ska_sdp_config.ska_sdp_cli.sdp_create import cmd_create, cmd_create_pb, cmd_deploy
 from ska_sdp_config.ska_sdp_cli.sdp_list import cmd_list
@@ -46,15 +48,15 @@ def test_cli_simple():
     if os.getenv("SDP_TEST_HOST") is not None:
         os.environ["SDP_CONFIG_HOST"] = os.getenv("SDP_TEST_HOST")
 
-    _test_cli_command(['delete', '-R', PREFIX])
+    _test_cli_command(["delete", "-R", PREFIX])
 
-    _test_cli_command(['get', PREFIX+'/test'], PREFIX+"/test = None")
-    _test_cli_command(['create', PREFIX+'/test', 'asdf'], "OK")
-    _test_cli_command(['get', PREFIX+'/test'], PREFIX+"/test = asdf")
-    _test_cli_command(['update', PREFIX+'/test', 'asd'], "OK")
-    _test_cli_command(['get', PREFIX+'/test'], PREFIX+"/test = asd")
-    _test_cli_command(['-q', 'get', PREFIX+'/test'], "asd")
-    _test_cli_command(['delete', PREFIX+'/test'], "OK")
+    _test_cli_command(["get", PREFIX + "/test"], [call('%s = %s', PREFIX + "/test", None)])
+    _test_cli_command(["create", PREFIX + "/test", "asdf"], "OK")
+    _test_cli_command(["get", PREFIX + "/test"], [call('%s = %s', PREFIX + "/test", "asdf")])
+    _test_cli_command(["update", PREFIX + "/test", "asd"], "OK")
+    _test_cli_command(["get", PREFIX + "/test"], [call('%s = %s', PREFIX + "/test", "asd")])
+    _test_cli_command(["-q", "get", PREFIX + "/test"], "asd")
+    _test_cli_command(["delete", PREFIX + "/test"], "OK")
 
 
 def test_cli_simple2():
@@ -62,19 +64,25 @@ def test_cli_simple2():
     if os.getenv("SDP_TEST_HOST") is not None:
         os.environ["SDP_CONFIG_HOST"] = os.getenv("SDP_TEST_HOST")
 
-    _test_cli_command(['create', PREFIX+'/test', 'asdf'], "OK")
-    _test_cli_command(['create', PREFIX+'/foo', 'bar'], "OK")
-    _test_cli_command(['ls', PREFIX+'/'],
-                      [call(f"Keys with {PREFIX}/ prefix:"),
-                       call(f"{PREFIX}/foo"),
-                       call(f"{PREFIX}/test")])
-    _test_cli_command(['-q', 'list', PREFIX+'/'],
-                      "{pre}/foo {pre}/test".format(pre=PREFIX))
-    _test_cli_command(['--prefix', PREFIX, 'process', 'realtime:test:0.1'],
-                      "OK, pb_id = pb-sdpcfg-{}-00000".format(
-                          date.today().strftime('%Y%m%d')))
-    _test_cli_command(['delete', PREFIX+'/test'], "OK")
-    _test_cli_command(['delete', PREFIX+'/foo'], "OK")
+    _test_cli_command(["create", PREFIX + "/test", "asdf"], "OK")
+    _test_cli_command(["create", PREFIX + "/foo", "bar"], "OK")
+    _test_cli_command(
+        ["ls", PREFIX + "/"],
+        [
+            call("Keys with %s prefix:", PREFIX+"/"),
+            call(f"{PREFIX}/foo"),
+            call(f"{PREFIX}/test"),
+        ],
+    )
+    _test_cli_command(
+        ["-q", "list", PREFIX + "/"], "{pre}/foo {pre}/test".format(pre=PREFIX)
+    )
+    _test_cli_command(
+        ["--prefix", PREFIX, "process", "realtime:test:0.1"],
+        [call("OK, pb_id = %s", "pb-sdpcfg-{}-00000".format(date.today().strftime("%Y%m%d")))],
+    )
+    _test_cli_command(["delete", PREFIX + "/test"], "OK")
+    _test_cli_command(["delete", PREFIX + "/foo"], "OK")
 
     _delete_test_pb()
 
@@ -96,8 +104,12 @@ def temp_cfg(mock_backend, etcd3):
             txn.raw.create(f"{etcd_prefix}/my_path", "MyValue")
             txn.raw.create(f"{etcd_prefix}/pb/pb-20210101-test/state", '{"pb": "info"}')
             txn.raw.create(f"{etcd_prefix}/pb/pb-20220101-test/state", '{"pb": "info"}')
-            txn.raw.create(f"{etcd_prefix}/workflow/batch:test:0.0.0", '{"image": "image"}')
-            txn.raw.create(f"{etcd_prefix}/workflow/batch:test:0.0.1", '{"image": "image"}')
+            txn.raw.create(
+                f"{etcd_prefix}/workflow/batch:test:0.0.0", '{"image": "image"}'
+            )
+            txn.raw.create(
+                f"{etcd_prefix}/workflow/batch:test:0.0.1", '{"image": "image"}'
+            )
         except ConfigCollision:
             # if still in db, do not recreate
             pass
@@ -105,10 +117,10 @@ def temp_cfg(mock_backend, etcd3):
     return cfg
 
 
-@pytest.mark.parametrize("quiet, expected_log", [
-    (None, f"{etcd_prefix}/my_path = MyValue"),
-    (True, "MyValue")
-])
+@pytest.mark.parametrize(
+    "quiet, expected_log",
+    [(None, [call("%s = %s", f"{etcd_prefix}/my_path", "MyValue")]), (True, [call("MyValue")])],
+)
 def test_cmd_get(quiet, expected_log, temp_cfg):
     """
     Correct information is logged whether the --quiet switch is set to True or not.
@@ -120,39 +132,55 @@ def test_cmd_get(quiet, expected_log, temp_cfg):
         for txn in temp_cfg.txn():
             cmd_get(txn, path, args)
 
-        mock_log.assert_called_with(expected_log)
+        assert mock_log.call_args_list == expected_log
 
 
-@pytest.mark.parametrize("quiet, values, expected_calls", [
-    (True, False, [
-        call(f"{etcd_prefix}/my_path"),
-        call(f"{etcd_prefix}/pb/pb-20210101-test/state"),
-        call(f"{etcd_prefix}/pb/pb-20220101-test/state"),
-        call(f"{etcd_prefix}/workflow/batch:test:0.0.0"),
-        call(f"{etcd_prefix}/workflow/batch:test:0.0.1")
-    ]),  # list --all without values
-    (True, True, [
-        call("MyValue"),
-        call('{"pb": "info"}'),
-        call('{"pb": "info"}'),
-        call('{"image": "image"}'),
-        call('{"image": "image"}')
-    ]),  # list --all with values
-    (False, False, [
-        call(f"Keys with prefix {etcd_prefix}/: "),
-        call(f"{etcd_prefix}/my_path"),
-        call(f"{etcd_prefix}/pb/pb-20210101-test/state"),
-        call(f"{etcd_prefix}/pb/pb-20220101-test/state"),
-        call(f"{etcd_prefix}/workflow/batch:test:0.0.0"),
-        call(f"{etcd_prefix}/workflow/batch:test:0.0.1")
-    ])
-])
+@pytest.mark.parametrize(
+    "quiet, values, expected_calls",
+    [
+        (
+            True,
+            False,
+            [
+                call(f"{etcd_prefix}/my_path"),
+                call(f"{etcd_prefix}/pb/pb-20210101-test/state"),
+                call(f"{etcd_prefix}/pb/pb-20220101-test/state"),
+                call(f"{etcd_prefix}/workflow/batch:test:0.0.0"),
+                call(f"{etcd_prefix}/workflow/batch:test:0.0.1"),
+            ],
+        ),  # list --all without values
+        (
+            True,
+            True,
+            [
+                call("MyValue"),
+                call('{"pb": "info"}'),
+                call('{"pb": "info"}'),
+                call('{"image": "image"}'),
+                call('{"image": "image"}'),
+            ],
+        ),  # list --all with values
+        (
+            False,
+            False,
+            [
+                call("Keys with prefix %s: ", etcd_prefix+"/"),
+                call(f"{etcd_prefix}/my_path"),
+                call(f"{etcd_prefix}/pb/pb-20210101-test/state"),
+                call(f"{etcd_prefix}/pb/pb-20220101-test/state"),
+                call(f"{etcd_prefix}/workflow/batch:test:0.0.0"),
+                call(f"{etcd_prefix}/workflow/batch:test:0.0.1"),
+            ],
+        ),
+    ],
+)
 def test_cmd_list_all(quiet, values, expected_calls, temp_cfg):
     """
     cmd_list correctly lists all of the contents of the Config DB.
     """
     # ska-sdp uses -R=True, and is not changeable there, so we only test that here
-    # -R=False doesn't behave well, if we want -R=False, that will need to be added and tested separately
+    # -R=False doesn't behave well, if we want -R=False,
+    # that will need to be added and tested separately
     args = {
         "-R": True,
         "--quiet": quiet,
@@ -172,26 +200,43 @@ def test_cmd_list_all(quiet, values, expected_calls, temp_cfg):
         assert mock_log.call_args_list == expected_calls
 
 
-@pytest.mark.parametrize("quiet, values, pb_date, expected_calls", [
-    (True, False, "20210101", [
-        call(f"{etcd_prefix}/pb/pb-20210101-test/state")
-    ]),  # pb for date in Config DB
-    (True, False, "20210102", []),  # pb for date not in Config DB
-    (True, False, None, [
-        call(f"{etcd_prefix}/pb/pb-20210101-test/state"),
-        call(f"{etcd_prefix}/pb/pb-20220101-test/state")
-    ]),  # not searching specific pb
-    (False, True, "20210101", [
-        call("Processing blocks for date 20210101: "),
-        call(f"{etcd_prefix}/pb/pb-20210101-test/state = "+'{"pb": "info"}')
-    ]),  # pb for date with values
-])
+@pytest.mark.parametrize(
+    "quiet, values, pb_date, expected_calls",
+    [
+        (
+            True,
+            False,
+            "20210101",
+            [call(f"{etcd_prefix}/pb/pb-20210101-test/state")],
+        ),  # pb for date in Config DB
+        (True, False, "20210102", []),  # pb for date not in Config DB
+        (
+            True,
+            False,
+            None,
+            [
+                call(f"{etcd_prefix}/pb/pb-20210101-test/state"),
+                call(f"{etcd_prefix}/pb/pb-20220101-test/state"),
+            ],
+        ),  # not searching specific pb
+        (
+            False,
+            True,
+            "20210101",
+            [
+                call("Processing blocks for date %s: ", "20210101"),
+                call("%s = %s", f"{etcd_prefix}/pb/pb-20210101-test/state", '{"pb": "info"}'),
+            ],
+        ),  # pb for date with values
+    ],
+)
 def test_cmd_list_pb(quiet, values, pb_date, expected_calls, temp_cfg):
     """
     cmd_list correctly lists processing block (pb) related content.
     """
     # ska-sdp uses -R=True, and is not changeable there, so we only test that here
-    # -R=False doesn't behave well, if we want -R=False, that will need to be added and tested separately
+    # -R=False doesn't behave well, if we want -R=False,
+    # that will need to be added and tested separately
     args = {
         "-R": True,
         "--quiet": quiet,
@@ -210,28 +255,51 @@ def test_cmd_list_pb(quiet, values, pb_date, expected_calls, temp_cfg):
         assert mock_log.call_args_list == expected_calls
 
 
-@pytest.mark.parametrize("quiet, values, wf_type, expected_calls", [
-    (True, False, "batch", [
-        call(f"{etcd_prefix}/workflow/batch:test:0.0.0"),
-        call(f"{etcd_prefix}/workflow/batch:test:0.0.1")
-    ]),  # workflow with type in db
-    (True, False, "relatime", []),  # workflow with type not in db
-    (True, False, None, [
-        call(f"{etcd_prefix}/workflow/batch:test:0.0.0"),
-        call(f"{etcd_prefix}/workflow/batch:test:0.0.1")
-    ]),  # not searching specific workflow
-    (False, True, "batch", [
-        call("Workflow definitions of type batch: "),
-        call(f"{etcd_prefix}/workflow/batch:test:0.0.0 = "+'{"image": "image"}'),
-        call(f"{etcd_prefix}/workflow/batch:test:0.0.1 = "+'{"image": "image"}')
-    ]),  # pb for date with values
-])
+@pytest.mark.parametrize(
+    "quiet, values, wf_type, expected_calls",
+    [
+        (
+            True,
+            False,
+            "batch",
+            [
+                call(f"{etcd_prefix}/workflow/batch:test:0.0.0"),
+                call(f"{etcd_prefix}/workflow/batch:test:0.0.1"),
+            ],
+        ),  # workflow with type in db
+        (True, False, "relatime", []),  # workflow with type not in db
+        (
+            True,
+            False,
+            None,
+            [
+                call(f"{etcd_prefix}/workflow/batch:test:0.0.0"),
+                call(f"{etcd_prefix}/workflow/batch:test:0.0.1"),
+            ],
+        ),  # not searching specific workflow
+        (
+            False,
+            True,
+            "batch",
+            [
+                call("Workflow definitions of type %s: ", "batch"),
+                call(
+                    "%s = %s", f"{etcd_prefix}/workflow/batch:test:0.0.0", '{"image": "image"}'
+                ),
+                call(
+                    "%s = %s", f"{etcd_prefix}/workflow/batch:test:0.0.1", '{"image": "image"}'
+                ),
+            ],
+        ),  # pb for date with values
+    ],
+)
 def test_cmd_list_workflow(quiet, values, wf_type, expected_calls, temp_cfg):
     """
     cmd_list correctly lists workflow definition related content.
     """
     # ska-sdp uses -R=True, and is not changeable there, so we only test that here
-    # -R=False doesn't behave well, if we want -R=False, that will need to be added and tested separately
+    # -R=False doesn't behave well, if we want -R=False,
+    # that will need to be added and tested separately
     args = {
         "-R": True,
         "--quiet": quiet,
@@ -269,11 +337,7 @@ def test_cmd_create_pb(temp_cfg):
     """
     cmd_create_pb correctly creates a processing block with the supplied workflow information.
     """
-    workflow = {
-        "type": "batch",
-        "id": "my-workflow",
-        "version": "0.1.1"
-    }
+    workflow = {"type": "batch", "id": "my-workflow", "version": "0.1.1"}
 
     parameters = '{"param1": "my_param"}'
 
@@ -328,18 +392,15 @@ def test_cmd_update(temp_cfg):
         assert txn.raw.get(path) == "new_value"
 
 
-@pytest.mark.parametrize("path, raise_err", [
-    (f"{etcd_prefix}/my_path", False),
-    (f"{etcd_prefix}/my_path/not_exist", True)
-])
+@pytest.mark.parametrize(
+    "path, raise_err",
+    [(f"{etcd_prefix}/my_path", False), (f"{etcd_prefix}/my_path/not_exist", True)],
+)
 def test_cmd_delete_non_recursive(path, raise_err, temp_cfg):
     """
     If recursion (-R) is not True, then only exact paths can be deleted.
     """
-    args = {
-        "-R": None,
-        "--quiet": True
-    }
+    args = {"-R": None, "--quiet": True}
     if not raise_err:
         for txn in temp_cfg.txn():
             assert txn.raw.get(path) is not None
@@ -364,10 +425,7 @@ def test_cmd_delete_recursive(temp_cfg):
     """
     path_prefix = f"{etcd_prefix}/pb"
 
-    args = {
-        "-R": True,
-        "--quiet": True
-    }
+    args = {"-R": True, "--quiet": True}
 
     for txn in temp_cfg.txn():
         keys = txn.raw.list_keys(path_prefix, recurse=8)
@@ -383,13 +441,7 @@ def test_cmd_delete_recursive(temp_cfg):
 
 def test_parse_definitions_for_import():
     # TODO
-    workflow_def = {
-        "repository": "my-repo",
-        "type": "batch",
-        "id": "test",
-        "version": "0.0.0"
-    }
-    result = parse_definitions(workflow_def)
+    pass
 
 
 def test_import_workflows():

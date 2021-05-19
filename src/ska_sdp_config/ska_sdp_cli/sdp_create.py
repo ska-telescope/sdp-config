@@ -11,8 +11,10 @@ Usage:
 
 Arguments:
     <workflow>      Workflow that the processing block will run, in the format of: type:id:version
-    <parameters>    Optional parameters for a workflow, with expected format: '{"key1": "value1", "key2": "value2"}'
-                    For deployments, expected format: '{"chart": <chart-name>, "values": <dict-of-values>}'
+    <parameters>    Optional parameters for a workflow, with expected format:
+                        '{"key1": "value1", "key2": "value2"}'
+                    For deployments, expected format:
+                        '{"chart": <chart-name>, "values": <dict-of-values>}'
     <deploy_id>     Id of the new deployment
     <type>          Type of the new deployment (currently "helm" only)
     Create general key-value pairs:
@@ -92,6 +94,7 @@ def cmd_deploy(txn, typ, deploy_id, parameters):
 
 
 def main(argv, config):
+    """Run ska-sdp create."""
     # TODO: should config be an input, or can I define the object here?
     # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
     #   --> see cli.py
@@ -104,8 +107,7 @@ def main(argv, config):
         if len(workflow) != 3:
             raise ValueError("Please specify workflow as 'type:name:version'!")
 
-        else:
-            workflow = {"type": workflow[0], "id": workflow[1], "version": workflow[2]}
+        workflow = {"type": workflow[0], "id": workflow[1], "version": workflow[2]}
 
         for txn in config.txn():
             pb_id = cmd_create_pb(txn, workflow, args["<parameters>"], args)

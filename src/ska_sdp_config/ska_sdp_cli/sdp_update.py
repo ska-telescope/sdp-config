@@ -35,7 +35,6 @@ import tempfile
 import yaml
 
 from docopt import docopt
-from ska_sdp_config import config
 
 LOG = logging.getLogger("ska-sdp")
 
@@ -52,13 +51,14 @@ def cmd_update(txn, key, value, _args):
     txn.raw.update(key, value)
 
 
-def cmd_edit(txn, key):
+def cmd_edit(txn, key, config=None):
     """
     Edit the value of a raw key in a CLI text editor.
     Only works if the editor's executable is supplied through the EDITOR env. var.
 
     :param txn: Config object transaction
     :param key: Key in the Config DB to update the value of
+    :param config: Config object
     """
     val = txn.raw.get(key)
     try:
@@ -100,6 +100,7 @@ def cmd_edit(txn, key):
 
 
 def main(argv, config):
+    "Run ska-sdp update / edit."
     # TODO: should config be an input, or can I define the object here?
     # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
     #   --> see cli.py
@@ -114,6 +115,6 @@ def main(argv, config):
             cmd_update(txn, key, args["<value>"], args)
 
         if args["edit"]:
-            cmd_edit(txn, key)
+            cmd_edit(txn, key, config=config)
 
     LOG.info("%s updated.", key)
