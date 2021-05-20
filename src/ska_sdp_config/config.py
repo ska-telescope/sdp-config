@@ -382,7 +382,7 @@ class Transaction:  # pylint: disable=too-many-public-methods
 
         # return list, stripping the prefix
         assert all(key.startswith(self._paths["deploy"]) for key in keys)
-        return list(key[len(self._paths["deploy"]) :] for key in keys)
+        return list(key[len(self._paths["deploy"]):] for key in keys)
 
     def create_deployment(self, dpl: entity.Deployment):
         """
@@ -418,7 +418,7 @@ class Transaction:  # pylint: disable=too-many-public-methods
 
         # Return list, stripping the prefix
         assert all(key.startswith(sb_path) for key in keys)
-        return list(key[len(sb_path) :] for key in keys)
+        return list(key[len(sb_path):] for key in keys)
 
     def get_scheduling_block(self, sb_id: str) -> dict:
         """
@@ -461,7 +461,7 @@ class Transaction:  # pylint: disable=too-many-public-methods
 
         # Return list, stripping the prefix
         assert all(key.startswith(subarray_path) for key in keys)
-        return list(key[len(subarray_path) :] for key in keys)
+        return list(key[len(subarray_path):] for key in keys)
 
     def get_subarray(self, subarray_id: str) -> dict:
         """
@@ -565,7 +565,7 @@ class Transaction:  # pylint: disable=too-many-public-methods
 
         # return list, stripping the prefix
         assert all(key.startswith(f"/{WORKFLOW_PREFIX}") for key in keys)
-        return list(key[len(f"/{WORKFLOW_PREFIX}/") :] for key in keys)
+        return list(key[len(f"/{WORKFLOW_PREFIX}/"):] for key in keys)
 
     def update_workflow(
         self, w_type: str, w_id: str, w_version: str, workflow: dict
