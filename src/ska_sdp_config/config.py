@@ -516,72 +516,83 @@ class Transaction:  # pylint: disable=too-many-public-methods
         state = self._get(self._paths["master"])
         return state
 
-    # TODO: Implements all the functions requirements
-    # TODO: Write unit-test
-    # TODO: Update documentation
-    # TODO: Push to branch
-
-    def create_workflow(self, type, id, version, workflow):
+    def create_workflow(
+        self, w_type: str, w_id: str, w_version: str, workflow: dict
+    ) -> None:
         """
-        create workflow
+        Create workflow.
 
-        :param type: workflow type
-        :param id: workflow id
-        :param version:
-        :param workflow:
-        :return:
+        :param w_type: workflow type
+        :param w_id: workflow id/name
+        :param w_version: workflow version
+        :param workflow: workflow definition
         """
 
-        self._create(self._workflow_path(type, id, version), workflow)
+        self._create(self._workflow_path(w_type, w_id, w_version), workflow)
 
-    def get_workflow(self, type, id, version):
+    def get_workflow(self, w_type: str, w_id: str, w_version: str) -> dict:
         """
         Get workflow.
 
-        :param type:
-        :param id:
-        :param version:
-        :return:
+        :param w_type: workflow type
+        :param w_id: workflow id/name
+        :param w_version: workflow version
+
+        :returns: workflow definitions
         """
 
-        workflow = self._get(self._workflow_path(type, id, version))
+        workflow = self._get(self._workflow_path(w_type, w_id, w_version))
         return workflow
 
-    # TODO Need to list all workflows, specified type and specified type and name
-    def list_workflows(self, type="", id="", version=""):
+    def list_workflows(self, w_type="", w_id="") -> list:
         """
-        List all workflows.
+        List workflows.
 
-        :returns: Deployment IDs
+        :param w_type: workflow type. Default empty
+        :param w_id: workflow id/name. Default empty
+
+        :returns: list of workflows
         """
-        # List keys
-        keys = self._txn.list_keys("/workflow/")
 
-        print("KEYS")
-        print(keys)
+        # List all keys
+        keys = self._txn.list_keys(f"/{WORKFLOW_PREFIX}/")
 
-        return keys
-        # # # return list, stripping the prefix
-        # assert all(key.startswith(WORKFLOW_PREFIX) for key in keys)
-        # return list(key[len(WORKFLOW_PREFIX) :] for key in keys)
+        # List specific keys
+        if w_type and not w_id:
+            keys = self._txn.list_keys(f"/{WORKFLOW_PREFIX}/{w_type}")
+        elif w_type and w_id:
+            keys = self._txn.list_keys(f"/{WORKFLOW_PREFIX}/{w_type}:{w_id}")
 
-    def update_workflow(self, type, id, version, workflow) -> None:
+        # return list, stripping the prefix
+        assert all(key.startswith(f"/{WORKFLOW_PREFIX}") for key in keys)
+        return list(key[len(f"/{WORKFLOW_PREFIX}/") :] for key in keys)
+
+    def update_workflow(
+        self, w_type: str, w_id: str, w_version: str, workflow: dict
+    ) -> None:
         """
-        Update master.
+        Update workflow.
 
-        :param state: master state
+        :param w_type: workflow type
+        :param w_id: workflow id/name
+        :param w_version: workflow version
+        :param workflow: workflow definition
+
         """
-        self._update(self._workflow_path(type, id, version), workflow)
+        self._update(self._workflow_path(w_type, w_id, w_version), workflow)
 
-    def delete_workflow(self, type, id, version):
+    def delete_workflow(self, w_type: str, w_id: str, w_version: str) -> None:
         """
-        Delete workflow
+        Delete workflow.
 
-        :return:
+        :param w_type: workflow type
+        :param w_id: workflow id/name
+        :param w_version: workflow version
+
         """
         # Delete all data associated with deployment
         for key in self._txn.list_keys(
-            self._workflow_path(type, id, version), recurse=5
+            self._workflow_path(w_type, w_id, w_version), recurse=5
         ):
             self._txn.delete(key)
 
@@ -589,5 +600,15 @@ class Transaction:  # pylint: disable=too-many-public-methods
     # Private methods
     # -------------------------------------
 
-    def _workflow_path(self, type, id, version):
-        return f"/{WORKFLOW_PREFIX}/{type}:{id}:{version}"
+    @staticmethod
+    def _workflow_path(w_type: str, w_id: str, w_version: str) -> str:
+        """
+        Construct workflow path.
+
+        :param w_type: workflow type
+        :param w_id: workflow id/name
+        :param w_version: workflow version
+
+        :returns: workflow path
+        """
+        return f"/{WORKFLOW_PREFIX}/{w_type}:{w_id}:{w_version}"
