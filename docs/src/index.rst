@@ -16,6 +16,7 @@ the stored configuration information.
   design
   schema
   api
+  cli
 
 
 Indices and tables
