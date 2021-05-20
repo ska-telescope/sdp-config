@@ -8,7 +8,7 @@ import ska_sdp_config
 # pylint: disable=missing-docstring,redefined-outer-name
 
 PREFIX = "/__test_sb"
-WORKFLOW_PREFIX = "/workflow/"
+WORKFLOW_PREFIX = "/workflow"
 
 
 # pylint: disable=W0212
