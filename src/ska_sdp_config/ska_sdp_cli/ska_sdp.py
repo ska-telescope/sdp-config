@@ -47,10 +47,7 @@ COMMAND = "COMMAND"
 def main(argv):
     """Run ska-sdp."""
     args = docopt(__doc__, argv=argv, options_first=True)
-
-    # prefix = ('' if args['--prefix'] is None else args['--prefix'])
-    prefix = ""
-    cfg = config.Config(global_prefix=prefix)
+    cfg = config.Config()
 
     if args[COMMAND] == "list":
         sdp_list.main(argv, cfg)

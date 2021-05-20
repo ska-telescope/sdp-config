@@ -38,7 +38,7 @@ test:
     - python3 setup.py test
   after_script:
     - mkdir -p build/reports
-    - mv code-coverage.xml unit-tests.xml coverage build/reports
+    - mv code-coverage.xml unit-tests.xml build/reports
   artifacts:
     paths:
       - build

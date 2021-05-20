@@ -19,7 +19,7 @@ Options:
     -q, --quiet        Cut back on unnecessary output
     -a, --all          List the contents of the Config DB, regardless of object type
     -v, --values       List all the values belonging to a key in the config db; default: False
-    --prefix=<prefix>  Path prefix for high-level API
+    --prefix=<prefix>  Path prefix (if other than standard Config paths, e.g. for testing)
 """
 import logging
 from docopt import docopt
@@ -98,7 +98,7 @@ def main(argv, config):
     object_dict = {
         "pb": args["pb"],
         "workflow": args["workflow"],
-        "deployment": args["deployment"],
+        "deploy": args["deployment"],
         "sbi": args["sbi"],
     }
 

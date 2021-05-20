@@ -15,7 +15,7 @@ Arguments:
 Options:
     -h, --help             Show this screen
     -q, --quiet            Cut back on unnecessary output
-    --prefix=<prefix>      Path prefix for high-level API
+    --prefix=<prefix>      Path prefix (if other than standard Config paths, e.g. for testing)
 """
 import logging
 from docopt import docopt
@@ -40,6 +40,10 @@ def cmd_delete(txn, path, args):
         txn.raw.delete(path)
 
 
+def _get_input():
+    return input("Continue? (yes, no) ")
+
+
 def main(argv, config):
     """Run ska-sdp delete."""
     # TODO: should config be an input, or can I define the object here?
@@ -50,34 +54,53 @@ def main(argv, config):
     object_dict = {
         "pb": args["pb"],
         "workflow": args["workflow"],
-        "deployment": args["deployment"],
+        "deploy": args["deployment"],
         "sbi": args["sbi"],
     }
-
+    prefix = args["--prefix"]
     args["-R"] = True
-    if args["--prefix"]:
-        path = args["--prefix"].rstrip("/") + "/"
+    path = ""
+
+    cont = False
+    if prefix:
+        if args["--all"] or args["-a"]:
+            LOG.warning(
+                "You are attempting to delete all entries with prefix %s "
+                "from the Configuration DB.",
+                prefix,
+            )
+            cont = _get_input()
+            if cont == "yes":
+                path = prefix.rstrip("/")
+            else:
+                LOG.info("Aborted")
+                return
+        else:
+            path = prefix.rstrip("/")
 
     for sdp_object, exists in object_dict.items():
         if exists:
             if args["--all"] or args["-a"]:
-                LOG.warning(
-                    "You are attempting to delete all entries of type %s "
-                    "from the Configuration DB.",
-                    sdp_object,
-                )
-                cont = input("Continue? (yes, no) ")
-                if cont == "yes":
-                    path = "/" + sdp_object
-                else:
-                    LOG.info("Aborted")
-                    return
+                if not cont:  # first time checking if user wants to delete all
+                    LOG.warning(
+                        "You are attempting to delete all entries of type %s "
+                        "from the Configuration DB.",
+                        sdp_object,
+                    )
+                    cont = _get_input()
+                    if cont == "yes":
+                        path = "/" + sdp_object
+                    else:
+                        LOG.info("Aborted")
+                        return
+                else:  # already checked if user wants to delete all with prefix
+                    path = path+"/" + sdp_object
 
             elif sdp_object == "workflow":
-                path = f"/workflow/{args['<workflow>']}"
+                path = f"{path}/workflow/{args['<workflow>']}"
 
             else:
-                path = f"/{sdp_object}/{args['<id>']}"
+                path = f"{path}/{sdp_object}/{args['<id>']}"
 
             break  # only one can be true, or none
 
