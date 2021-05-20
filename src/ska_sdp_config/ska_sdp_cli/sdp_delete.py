@@ -17,6 +17,8 @@ Options:
     -q, --quiet            Cut back on unnecessary output
     --prefix=<prefix>      Path prefix (if other than standard Config paths, e.g. for testing)
 """
+# pylint: disable=too-many-branches
+
 import logging
 from docopt import docopt
 

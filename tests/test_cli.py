@@ -13,6 +13,7 @@ import pytest
 
 from ska_sdp_config import cli, config, ConfigCollision, ConfigVanished
 from ska_sdp_config.ska_sdp_cli.sdp_delete import cmd_delete
+from ska_sdp_config.ska_sdp_cli.sdp_import import parse_definitions, import_workflows
 from ska_sdp_config.ska_sdp_cli.sdp_update import cmd_update
 from ska_sdp_config.ska_sdp_cli.sdp_create import cmd_create, cmd_create_pb, cmd_deploy
 from ska_sdp_config.ska_sdp_cli.sdp_list import cmd_list
@@ -23,6 +24,47 @@ from tests.test_backend_etcd3 import PREFIX as etcd_prefix
 from tests.test_backend_etcd3 import etcd3
 
 PREFIX = "/__test_cli"
+
+STRUCTURED_WORKFLOW = {
+    "about": ["SDP Processing Controller workflow definitions"],
+    "version": {"date-time": "2021-05-14T16:00:00Z"},
+    "repositories": [
+        {"name": "nexus", "path": "some-repo/sdp-prototype"}
+    ],
+    "workflows": [
+        {
+            "type": "batch",
+            "id": "test_batch",
+            "repository": "nexus",
+            "image": "workflow-test-batch",
+            "versions": ["0.2.2"],
+        },
+        {
+            "type": "realtime",
+            "id": "test_realtime",
+            "repository": "nexus",
+            "image": "workflow-test-realtime",
+            "versions": ["0.2.2"],
+        },
+    ],
+}
+
+FLAT_WORKFLOW = {
+    "workflows": [
+        {
+            "type": "realtime",
+            "id": "test_realtime",
+            "version": "0.2.2",
+            "image": "some-repo/sdp-prototype/workflow-test-realtime:0.2.2",
+        },
+        {
+            "type": "batch",
+            "id": "test_batch",
+            "version": "0.2.2",
+            "image": "some-repo/sdp-prototype/workflow-test-batch:0.2.2",
+        },
+    ]
+}
 
 
 def _test_cli_command(argv, message=None):
@@ -50,11 +92,17 @@ def test_cli_simple():
 
     _test_cli_command(["delete", "-R", PREFIX])
 
-    _test_cli_command(["get", PREFIX + "/test"], [call('%s = %s', PREFIX + "/test", None)])
+    _test_cli_command(
+        ["get", PREFIX + "/test"], [call("%s = %s", PREFIX + "/test", None)]
+    )
     _test_cli_command(["create", PREFIX + "/test", "asdf"], "OK")
-    _test_cli_command(["get", PREFIX + "/test"], [call('%s = %s', PREFIX + "/test", "asdf")])
+    _test_cli_command(
+        ["get", PREFIX + "/test"], [call("%s = %s", PREFIX + "/test", "asdf")]
+    )
     _test_cli_command(["update", PREFIX + "/test", "asd"], "OK")
-    _test_cli_command(["get", PREFIX + "/test"], [call('%s = %s', PREFIX + "/test", "asd")])
+    _test_cli_command(
+        ["get", PREFIX + "/test"], [call("%s = %s", PREFIX + "/test", "asd")]
+    )
     _test_cli_command(["-q", "get", PREFIX + "/test"], "asd")
     _test_cli_command(["delete", PREFIX + "/test"], "OK")
 
@@ -69,7 +117,7 @@ def test_cli_simple2():
     _test_cli_command(
         ["ls", PREFIX + "/"],
         [
-            call("Keys with %s prefix:", PREFIX+"/"),
+            call("Keys with %s prefix:", PREFIX + "/"),
             call(f"{PREFIX}/foo"),
             call(f"{PREFIX}/test"),
         ],
@@ -79,7 +127,12 @@ def test_cli_simple2():
     )
     _test_cli_command(
         ["--prefix", PREFIX, "process", "realtime:test:0.1"],
-        [call("OK, pb_id = %s", "pb-sdpcfg-{}-00000".format(date.today().strftime("%Y%m%d")))],
+        [
+            call(
+                "OK, pb_id = %s",
+                "pb-sdpcfg-{}-00000".format(date.today().strftime("%Y%m%d")),
+            )
+        ],
     )
     _test_cli_command(["delete", PREFIX + "/test"], "OK")
     _test_cli_command(["delete", PREFIX + "/foo"], "OK")
@@ -119,7 +172,10 @@ def temp_cfg(mock_backend, etcd3):
 
 @pytest.mark.parametrize(
     "quiet, expected_log",
-    [(None, [call("%s = %s", f"{etcd_prefix}/my_path", "MyValue")]), (True, [call("MyValue")])],
+    [
+        (None, [call("%s = %s", f"{etcd_prefix}/my_path", "MyValue")]),
+        (True, [call("MyValue")]),
+    ],
 )
 def test_cmd_get(quiet, expected_log, temp_cfg):
     """
@@ -164,7 +220,7 @@ def test_cmd_get(quiet, expected_log, temp_cfg):
             False,
             False,
             [
-                call("Keys with prefix %s: ", etcd_prefix+"/"),
+                call("Keys with prefix %s: ", etcd_prefix + "/"),
                 call(f"{etcd_prefix}/my_path"),
                 call(f"{etcd_prefix}/pb/pb-20210101-test/state"),
                 call(f"{etcd_prefix}/pb/pb-20220101-test/state"),
@@ -225,7 +281,11 @@ def test_cmd_list_all(quiet, values, expected_calls, temp_cfg):
             "20210101",
             [
                 call("Processing blocks for date %s: ", "20210101"),
-                call("%s = %s", f"{etcd_prefix}/pb/pb-20210101-test/state", '{"pb": "info"}'),
+                call(
+                    "%s = %s",
+                    f"{etcd_prefix}/pb/pb-20210101-test/state",
+                    '{"pb": "info"}',
+                ),
             ],
         ),  # pb for date with values
     ],
@@ -284,10 +344,14 @@ def test_cmd_list_pb(quiet, values, pb_date, expected_calls, temp_cfg):
             [
                 call("Workflow definitions of type %s: ", "batch"),
                 call(
-                    "%s = %s", f"{etcd_prefix}/workflow/batch:test:0.0.0", '{"image": "image"}'
+                    "%s = %s",
+                    f"{etcd_prefix}/workflow/batch:test:0.0.0",
+                    '{"image": "image"}',
                 ),
                 call(
-                    "%s = %s", f"{etcd_prefix}/workflow/batch:test:0.0.1", '{"image": "image"}'
+                    "%s = %s",
+                    f"{etcd_prefix}/workflow/batch:test:0.0.1",
+                    '{"image": "image"}',
                 ),
             ],
         ),  # pb for date with values
@@ -439,11 +503,71 @@ def test_cmd_delete_recursive(temp_cfg):
         assert len(keys) == 0
 
 
-def test_parse_definitions_for_import():
-    # TODO
-    pass
+@pytest.mark.parametrize("workflow_def",[
+    STRUCTURED_WORKFLOW, FLAT_WORKFLOW
+])
+def test_parse_definitions_for_import(workflow_def):
+    """
+    Parse workflow definitions from structured and from flat dictionaries.
+    """
+    result = parse_definitions(workflow_def)
+    expected_keys = [("batch", "test_batch", "0.2.2"), ("realtime", "test_realtime", "0.2.2")]
+    expected_values = ["some-repo/sdp-prototype/workflow-test-batch:0.2.2",
+                       "some-repo/sdp-prototype/workflow-test-realtime:0.2.2"]
+
+    assert len(result) == 2
+    assert sorted(list(result.keys())) == sorted(
+        expected_keys
+    )
+    assert list(result.values())[0]["image"] in expected_values
+    assert list(result.values())[1]["image"] in expected_values
 
 
-def test_import_workflows():
-    # TODO
-    pass
+@patch("ska_sdp_config.config.Config._determine_backend")
+def test_import_workflows(mock_backend, etcd3):
+    """
+    Test that sdp_import correctly adds, updates, and deletes workflows, from input dictionary.
+    """
+    mock_backend.return_value = etcd3
+    cfg = config.Config(global_prefix=etcd_prefix)
+    # clean up before test runs
+    for txn in cfg.txn():
+        cmd_delete(txn, "/", {"--quiet": True, "-R": True})
+
+    # workflows to be imported
+    workflows = {
+        ("batch", "test", "0.0.0"): {"image": "batch-test:0.0.0"},  # to update
+        ("realtime", "test", "0.1.0"): {"image": "realtime-test:0.1.0"}  # to be inserted
+    }
+
+    # keys already in db (added in first txn loop)
+    keys_in_db = [
+        f"{etcd_prefix}/workflow/batch:test:0.0.0",  # to be updated
+        f"{etcd_prefix}/workflow/batch:test:0.0.1"  # to be deleted
+    ]
+    for txn in cfg.txn():
+        txn.raw.create(
+            keys_in_db[0], '{"image": "image"}'
+        )
+        txn.raw.create(
+            keys_in_db[1], '{"image": "image"}'
+        )
+
+    # double check that keys are there and value is as created above,
+    # then import workflows from dict
+    for txn in cfg.txn():
+        assert json.loads(txn.raw.get(keys_in_db[0]))["image"] == "image"
+        assert txn.raw.list_keys(f"{etcd_prefix}/workflow", recurse=8) == keys_in_db
+
+        import_workflows(txn, workflows, sync=True, prefix=etcd_prefix)
+
+    # keys in db after importing
+    updated_keys_in_db = [
+        f"{etcd_prefix}/workflow/batch:test:0.0.0",  # updated
+        f"{etcd_prefix}/workflow/realtime:test:0.1.0"  # added
+    ]
+
+    # test that one key is correctly updated, one removed, and one added
+    for txn in cfg.txn():
+        assert json.loads(txn.raw.get(keys_in_db[0]))["image"] == "batch-test:0.0.0"
+        assert txn.raw.list_keys(f"{etcd_prefix}/workflow", recurse=8) == updated_keys_in_db

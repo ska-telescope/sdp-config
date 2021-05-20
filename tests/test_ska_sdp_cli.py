@@ -1,6 +1,8 @@
 """Test the main functions of the various ska-sdp commands"""
-import pytest
+# pylint: disable=too-many-arguments
+
 from unittest.mock import patch, Mock
+import pytest
 from ska_sdp_config.ska_sdp_cli import (
     ska_sdp,
     sdp_list,
@@ -23,10 +25,14 @@ SDP_IMPORT = "sdp_import"
 
 
 class MockConfig:
+    # pylint: disable=no-self-use
+    # pylint: disable=too-few-public-methods
+    """MockConfig object for testing"""
     def __init__(self):
         pass
 
     def txn(self):
+        """Mock transaction"""
         return [
             Mock(
                 raw=Mock(
@@ -96,7 +102,7 @@ def test_ska_sdp_main(
     # none of the other commands are called
     for key, mock in command_dict.items():
         if key != executable:
-            command_dict[key].assert_not_called()
+            mock.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -122,12 +128,11 @@ def test_sdp_list_main(mock_list_cmd, options, expected_path):
     config = MockConfig()
     argv = ["list"] + options.split()
 
-    expected_path = expected_path
-
     # run tested function
     sdp_list.main(argv, config)
 
-    # [0][0] --> only one call, to get the tuple of args out of the call(), need to go another layer deep
+    # [0][0] --> only one call, to get the tuple of args out of the call(),
+    # need to go another layer deep
     result_calls = mock_list_cmd.call_args_list[0][0]
     assert result_calls[1] == expected_path
 
@@ -151,7 +156,8 @@ def test_sdp_get_main(mock_get_cmd, options, expected_args, times_called):
     # run tested function
     sdp_get.main(argv, config)
 
-    # [0][0] --> 1st call, to get the tuple of args out of the call(), need to go another layer deep
+    # [0][0] --> 1st call, to get the tuple of args out of the call(),
+    # need to go another layer deep
     result_calls = mock_get_cmd.call_args_list[0][0]
 
     assert result_calls[1] == expected_args
@@ -201,7 +207,7 @@ def test_sdp_create_main(
     cmd_map[cmd_to_call].assert_called()
     for i, cmd in cmd_map.items():
         if i != cmd_to_call:
-            cmd_map[i].assert_not_called()
+            cmd.assert_not_called()
 
     result_calls = cmd_map[cmd_to_call].call_args_list[0][0]
     assert result_calls[1] == expected_value
@@ -225,6 +231,9 @@ def test_sdp_create_main(
 def test_sdp_update_main(
     mock_edit_cmd, mock_update_cmd, cmd_to_run, options, expected_key
 ):
+    """
+    cmd_update, and cmd_edit are called with the correct keys.
+    """
     mock_update_cmd.return_value = Mock()
     mock_edit_cmd.return_value = Mock()
     config = MockConfig()
@@ -239,7 +248,7 @@ def test_sdp_update_main(
     cmd_map[cmd_to_run].assert_called_once()
     for cmd, mock in cmd_map.items():
         if cmd != cmd_to_run:
-            cmd_map[cmd].assert_not_called()
+            mock.assert_not_called()
 
     result_calls = cmd_map[cmd_to_run].call_args_list[0][0]
     assert result_calls[1] == expected_key
@@ -259,6 +268,11 @@ def test_sdp_update_main(
 @patch(f"{PATH_PREFIX}.{SDP_DELETE}.cmd_delete")
 @patch(f"{PATH_PREFIX}.{SDP_DELETE}._get_input", Mock(return_value="yes"))
 def test_sdp_delete_main(mock_delete_cmd, options, expected_path, log_message):
+    """
+    sdp_delete logs warning when -a / --all is set.
+    Continue is always "yes" --> cmd_delete is called with correct path.
+    cmd_delete is called with correct path.
+    """
     mock_delete_cmd.return_value = Mock()
     config = MockConfig()
     argv = ["delete"] + options.split()
@@ -284,6 +298,9 @@ def test_sdp_delete_main(mock_delete_cmd, options, expected_path, log_message):
 @patch(f"{PATH_PREFIX}.{SDP_IMPORT}.read_input", Mock())
 @patch(f"{PATH_PREFIX}.{SDP_IMPORT}.parse_definitions", Mock())
 def test_sdp_import_main(mock_import_workflows, options, sync):
+    """
+    sdp_import executes correctly with both --sync True and False
+    """
     mock_import_workflows.return_value = Mock()
     config = MockConfig()
     argv = options

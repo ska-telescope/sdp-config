@@ -2,20 +2,21 @@
 Import workflow definitions into the Configuration Database.
 
 Usage:
-    ska-sdp import [options] <file_or_url>
+    ska-sdp import [options] <file-or-url>
     ska-sdp import (-h|--help)
 
 Arguments:
     <file-or-url>      File or URL to import workflow definitions from.
 
 Options:
-    -h, --help    Show this screen
-    --sync        Delete workflows not in the input
+    -h, --help          Show this screen
+    --sync              Delete workflows not in the input
         TODO: should it be called delete? or maybe different definition?
 
 TODO: add example of what the file should be like?
 """
 # pylint: disable=protected-access
+# pylint: disable=too-many-arguments
 
 import logging
 import os
@@ -29,30 +30,30 @@ LOG = logging.getLogger("ska-sdp")
 WORKFLOW_PREFIX = "workflow"
 
 
-def _workflow_path(wf_type, wf_id, version):
-    return f"/{WORKFLOW_PREFIX}/{wf_type}:{wf_id}:{version}"
+def _workflow_path(wf_type, wf_id, version, prefix=""):
+    return f"{prefix}/{WORKFLOW_PREFIX}/{wf_type}:{wf_id}:{version}"
 
 
-def _list_workflows(txn):
-    keys = txn.raw.list_keys("/" + WORKFLOW_PREFIX)
-    workflows = [tuple(k.split("/")[2].split(":")) for k in keys]
+def _list_workflows(txn, prefix=""):
+    keys = txn.raw.list_keys(f"{prefix}/{WORKFLOW_PREFIX}/")
+    workflows = [tuple(k.replace(prefix, "").split("/")[2].split(":")) for k in keys]
     return workflows
 
 
-def _get_workflow(txn, wf_type, wf_id, version):
-    return txn._get(_workflow_path(wf_type, wf_id, version))
+def _get_workflow(txn, wf_type, wf_id, version, prefix=""):
+    return txn._get(_workflow_path(wf_type, wf_id, version, prefix))
 
 
-def _create_workflow(txn, wf_type, wf_id, version, workflow):
-    txn._create(_workflow_path(wf_type, wf_id, version), workflow)
+def _create_workflow(txn, wf_type, wf_id, version, workflow, prefix=""):
+    txn._create(_workflow_path(wf_type, wf_id, version, prefix), workflow)
 
 
-def _update_workflow(txn, wf_type, wf_id, version, workflow):
-    txn._update(_workflow_path(wf_type, wf_id, version), workflow)
+def _update_workflow(txn, wf_type, wf_id, version, workflow, prefix=""):
+    txn._update(_workflow_path(wf_type, wf_id, version, prefix), workflow)
 
 
-def _delete_workflow(txn, wf_type, wf_id, version):
-    txn.raw.delete(_workflow_path(wf_type, wf_id, version))
+def _delete_workflow(txn, wf_type, wf_id, version, prefix=""):
+    txn.raw.delete(_workflow_path(wf_type, wf_id, version, prefix))
 
 
 def read_input(input_object: str) -> Dict:
@@ -123,32 +124,35 @@ def parse_definitions(definitions: Dict) -> Dict:
     return workflows
 
 
-def import_workflows(txn, workflows: Dict, sync: bool = True):
+def import_workflows(txn, workflows: Dict, sync: bool = True, prefix: str = ""):
     """
     Import the workflow definitions into the Configuration Database.
 
     :param txn: Config object transaction
     :param workflows: workflow definitions
     :param sync: delete workflows not in the input
+    :param prefix: custom-prefix to add to the workflow keys, used for testing only
     """
     # Create sorted list of existing and new workflows
-    all_workflows = sorted(list(set(_list_workflows(txn)) | set(workflows.keys())))
+    existing_workflows = _list_workflows(txn, prefix=prefix)
+    all_workflows = sorted(list(set(existing_workflows) | set(workflows.keys())))
+
     change = False
     for key in all_workflows:
         if key in workflows:
-            old_value = _get_workflow(txn, *key)
+            old_value = _get_workflow(txn, *key, prefix=prefix)
             new_value = workflows[key]
             if old_value is None:
                 LOG.info("Creating %s", key)
-                _create_workflow(txn, *key, new_value)
+                _create_workflow(txn, *key, new_value, prefix=prefix)
                 change = True
             elif new_value != old_value:
                 LOG.info("Updating %s", key)
-                _update_workflow(txn, *key, new_value)
+                _update_workflow(txn, *key, new_value, prefix=prefix)
                 change = True
         elif sync:
             LOG.info("Deleting %s", key)
-            _delete_workflow(txn, *key)
+            _delete_workflow(txn, *key, prefix=prefix)
             change = True
     if not change:
         LOG.info("No changes")
