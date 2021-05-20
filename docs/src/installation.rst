@@ -73,7 +73,12 @@ Alternative way is by using the two shell scripts in the scripts directory:
 ``docker_run_etcd.sh`` -> Which runs etcd in a Docker container for testing the code.
 ``docker_run_python.sh`` -> Runs a python container and connects to the etcd instance.
 
-First, run the ``docker_run_etcd.sh`` and then copy ``docker_run_python.sh`` into the top-level directory and run it.
+Run the scripts from the root of the repository:
+
+.. code-block:: bash
+
+    bash scripts/docker_run_etcd.sh
+    bash scripts/docker_run_python.sh
 
 Once the container is started and mounted to the local directory.
 

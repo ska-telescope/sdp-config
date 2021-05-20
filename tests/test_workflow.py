@@ -7,9 +7,8 @@ import ska_sdp_config
 
 # pylint: disable=missing-docstring,redefined-outer-name
 
-PREFIX = "/workflow"
-WORKFLOW_IMAGE = "test-workflow"
-WORKFLOW_REPOSITORY = "nexus"
+PREFIX = "/__test_workflow"
+WORKFLOW_IMAGE = "nexus/workflow-test"
 
 
 # pylint: disable=W0212
@@ -22,23 +21,19 @@ def cfg():
         cfg._backend.delete(PREFIX, must_exist=False, recursive=True)
 
 
-def test_workflow_list(cfg):
-    """Test workflow list."""
+def test_workflow_list_all(cfg):
+    """Test list all workflows."""
 
     workflow_type = "realtime"
     workflow_id = "test_realtime"
     workflow_version = "0.0.1"
-    workflow_list = [f"{workflow_type}:{workflow_id}:{workflow_version}"]
+
+    workflow = {"image": f"{WORKFLOW_IMAGE}:{workflow_version}"}
 
     # Check the workflow list is empty
     for txn in cfg.txn():
         w_list = txn.list_workflows()
         assert w_list == []
-
-    workflow = {
-        "repository": WORKFLOW_REPOSITORY,
-        "image": WORKFLOW_IMAGE,
-    }
 
     # Create workflow
     for txn in cfg.txn():
@@ -46,26 +41,55 @@ def test_workflow_list(cfg):
 
     # List all the workflows
     for txn in cfg.txn():
-        w_list = txn.list_workflows()
-        assert w_list == workflow_list
+        workflow_keys = txn.list_workflows()
+        for w_type, w_id, w_version in workflow_keys:
+            assert w_type == workflow_type
+            assert w_id == workflow_id
+            assert w_version == workflow_version
+
+
+def test_workflow_list_type(cfg):
+    """Test workflows with specific type."""
+
+    workflow_type = "batch"
+    workflow_id = "test_batch"
+    workflow_version = "0.0.1"
+
+    workflow = {"image": f"{WORKFLOW_IMAGE}:{workflow_version}"}
 
     # Create workflow
     for txn in cfg.txn():
-        txn.create_workflow("batch", workflow_id, workflow_version, workflow)
+        txn.create_workflow(workflow_type, workflow_id, workflow_version, workflow)
 
     # List workflows with specified type
     for txn in cfg.txn():
-        w_list = txn.list_workflows("batch")
-        assert w_list == [f"batch:{workflow_id}:{workflow_version}"]
+        workflow_keys = txn.list_workflows(workflow_type)
+        for w_type, w_id, w_version in workflow_keys:
+            assert w_type == workflow_type
+            assert w_id == workflow_id
+            assert w_version == workflow_version
+
+
+def test_workflow_list_type_id(cfg):
+    """Test workflows with specific type and id."""
+
+    workflow_type = "batch"
+    workflow_id = "test_vis_receive"
+    workflow_version = "0.0.1"
+
+    workflow = {"image": f"{WORKFLOW_IMAGE}:{workflow_version}"}
 
     # Create workflow
     for txn in cfg.txn():
-        txn.create_workflow("batch", "test_vis_receive", workflow_version, workflow)
+        txn.create_workflow(workflow_type, workflow_id, workflow_version, workflow)
 
     # List workflows of specified type and name
     for txn in cfg.txn():
-        w_list = txn.list_workflows("batch", "test_vis_receive")
-        assert w_list == [f"batch:test_vis_receive:{workflow_version}"]
+        workflow_keys = txn.list_workflows(workflow_type, workflow_id)
+        for w_type, w_id, w_version in workflow_keys:
+            assert w_type == workflow_type
+            assert w_id == workflow_id
+            assert w_version == workflow_version
 
 
 def test_workflow_create_update(cfg):
@@ -75,14 +99,9 @@ def test_workflow_create_update(cfg):
     workflow_id = "test_batch"
     workflow_version = "0.2.1"
 
-    workflow = {
-        "repository": WORKFLOW_REPOSITORY,
-        "image": WORKFLOW_IMAGE,
-    }
-
+    workflow = {"image": f"{WORKFLOW_IMAGE}:{workflow_version}"}
     workflow2 = {
-        "repository": "nexus",
-        "image": "workflow-test-realtime",
+        "image": "nexus/workflow-test-realtime:0.2.1",
     }
 
     # Create workflow
@@ -116,10 +135,7 @@ def test_delete_workflow(cfg):
     workflow_id = "test_cbf_recv"
     workflow_version = "0.1.0"
 
-    workflow = {
-        "repository": WORKFLOW_REPOSITORY,
-        "image": WORKFLOW_IMAGE,
-    }
+    workflow = {"image": f"{WORKFLOW_IMAGE}:{workflow_version}"}
 
     # Create workflow
     for txn in cfg.txn():
@@ -127,8 +143,8 @@ def test_delete_workflow(cfg):
 
     # Read workflow and check it is equal to workflow
     for txn in cfg.txn():
-        state = txn.get_workflow(workflow_type, workflow_id, workflow_version)
-        assert state == workflow
+        w_get = txn.get_workflow(workflow_type, workflow_id, workflow_version)
+        assert w_get == workflow
 
     # Delete workflow
     for txn in cfg.txn():
@@ -136,8 +152,8 @@ def test_delete_workflow(cfg):
 
     # Read workflow and check it is equal to None
     for txn in cfg.txn():
-        state = txn.get_workflow(workflow_type, workflow_id, workflow_version)
-        assert state is None
+        w_get = txn.get_workflow(workflow_type, workflow_id, workflow_version)
+        assert w_get is None
 
 
 if __name__ == "__main__":

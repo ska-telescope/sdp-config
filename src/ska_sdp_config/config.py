@@ -9,8 +9,6 @@ from typing import Iterable
 
 from . import backend as backend_mod, entity
 
-WORKFLOW_PREFIX = "workflow"
-
 
 class Config:
     """Connection to SKA SDP configuration."""
@@ -41,6 +39,7 @@ class Config:
             "subarray": global_prefix + "/subarray/",
             "master": global_prefix + "/master",
             "deploy": global_prefix + "/deploy/",
+            "workflow": global_prefix + "/workflow/",
         }
 
         # Lease associated with client
@@ -544,7 +543,7 @@ class Transaction:  # pylint: disable=too-many-public-methods
         workflow = self._get(self._workflow_path(w_type, w_id, w_version))
         return workflow
 
-    def list_workflows(self, w_type="", w_id="") -> list:
+    def list_workflows(self, w_type: str = "", w_id: str = "") -> list:
         """
         List workflows.
 
@@ -554,18 +553,17 @@ class Transaction:  # pylint: disable=too-many-public-methods
         :returns: list of workflows
         """
 
-        # List all keys
-        keys = self._txn.list_keys(f"/{WORKFLOW_PREFIX}/")
+        # List all or specific keys
+        workflow_path = self._paths["workflow"]
+        if not w_type:
+            keys = self._txn.list_keys(workflow_path)
+        elif not w_id:
+            keys = self._txn.list_keys(workflow_path + w_type)
+        else:
+            keys = self._txn.list_keys(workflow_path + w_type + ":" + w_id)
 
-        # List specific keys
-        if w_type and not w_id:
-            keys = self._txn.list_keys(f"/{WORKFLOW_PREFIX}/{w_type}")
-        elif w_type and w_id:
-            keys = self._txn.list_keys(f"/{WORKFLOW_PREFIX}/{w_type}:{w_id}")
-
-        # return list, stripping the prefix
-        assert all(key.startswith(f"/{WORKFLOW_PREFIX}") for key in keys)
-        return list(key[len(f"/{WORKFLOW_PREFIX}/"):] for key in keys)
+        # Return list, stripping the prefix
+        return list(key[len(workflow_path) :].split(":") for key in keys)
 
     def update_workflow(
         self, w_type: str, w_id: str, w_version: str, workflow: dict
@@ -600,8 +598,7 @@ class Transaction:  # pylint: disable=too-many-public-methods
     # Private methods
     # -------------------------------------
 
-    @staticmethod
-    def _workflow_path(w_type: str, w_id: str, w_version: str) -> str:
+    def _workflow_path(self, w_type: str, w_id: str, w_version: str) -> str:
         """
         Construct workflow path.
 
@@ -611,4 +608,5 @@ class Transaction:  # pylint: disable=too-many-public-methods
 
         :returns: workflow path
         """
-        return f"/{WORKFLOW_PREFIX}/{w_type}:{w_id}:{w_version}"
+        workflow_path = self._paths["workflow"]
+        return f"{workflow_path}{w_type}:{w_id}:{w_version}"
