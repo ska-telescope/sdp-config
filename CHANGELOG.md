@@ -1,4 +1,4 @@
 <new-version>
 -------------
 
-* New CLI, called `ska-sdp` added
+* New CLI, called `ska-sdp` added and `sdpcfg` removed

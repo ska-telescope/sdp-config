@@ -101,10 +101,10 @@ SDP Objects:
      - n/a
      -
 
-Usage
------
+Relevant environment variables
+------------------------------
 
-Backend-related environment variables::
+Backend-related::
 
   SDP_CONFIG_BACKEND   Database backend (default etcd3)
   SDP_CONFIG_HOST      Database host address (default 127.0.0.1)
@@ -113,6 +113,13 @@ Backend-related environment variables::
   SDP_CONFIG_CERT      Client certificate
   SDP_CONFIG_USERNAME  User name
   SDP_CONFIG_PASSWORD  User password
+
+When running `ska-sdp edit`::
+
+  EDITOR    Executable of an existing text editor. Recommended: vi, vim, nano (i.e. command line-based editors)
+
+Usage
+-----
 
 .. code-block:: bash
 
@@ -303,3 +310,39 @@ Backend-related environment variables::
     Options:
         -h, --help          Show this screen
         --sync              Delete workflows not in the input
+
+
+Example workflow definitions file content for import
+----------------------------------------------------
+
+Structured::
+
+    {
+      "about": [
+        "SDP Processing Controller workflow definitions"
+      ],
+      "version": {
+        "date-time": "2021-05-14T16:00:00Z"
+      },
+      "repositories": [
+        {"name": "nexus", "path": "nexus.engageska-portugal.pt/sdp-prototype"}
+      ],
+      "workflows": [
+        {"type": "batch", "id":  "test_batch", "repository": "nexus", "image": "workflow-test-batch", "versions": ["0.2.2"]},
+        {"type": "realtime", "id":  "test_realtime", "repository": "nexus", "image": "workflow-test-realtime2", "versions": ["0.2.2"]}
+      ]
+    }
+
+Flat::
+
+    workflows:
+    - type: realtime
+      id: test_realtime
+      version: 0.2.2
+      image: nexus.engageska-portugal.pt/sdp-prototype/workflow-test-realtime:0.2.2
+    - type: batch
+      id: test_batch
+      version: 0.2.2
+      image: nexus.engageska-portugal.pt/sdp-prototype/workflow-test-batch:0.2.2
+
+Both YAML and JSON files are accepted.

@@ -93,7 +93,7 @@ def main(argv, config):
                         LOG.info("Aborted")
                         return
                 else:  # already checked if user wants to delete all with prefix
-                    path = path+"/" + sdp_object
+                    path = path + "/" + sdp_object
 
             elif sdp_object == "workflow":
                 path = f"{path}/workflow/{args['<workflow>']}"

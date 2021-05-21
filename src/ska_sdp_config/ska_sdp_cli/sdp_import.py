@@ -27,7 +27,6 @@ from docopt import docopt
 from ska_sdp_config.config import Transaction
 
 LOG = logging.getLogger("ska-sdp")
-WORKFLOW_PREFIX = "workflow"
 
 
 def read_input(input_object: str) -> Dict:

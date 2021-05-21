@@ -23,9 +23,7 @@ from tests.test_backend_etcd3 import etcd3
 STRUCTURED_WORKFLOW = {
     "about": ["SDP Processing Controller workflow definitions"],
     "version": {"date-time": "2021-05-14T16:00:00Z"},
-    "repositories": [
-        {"name": "nexus", "path": "some-repo/sdp-prototype"}
-    ],
+    "repositories": [{"name": "nexus", "path": "some-repo/sdp-prototype"}],
     "workflows": [
         {
             "type": "batch",
@@ -79,12 +77,8 @@ def temp_cfg(mock_backend, etcd3):
             txn.raw.create(f"{PREFIX}/my_path", "MyValue")
             txn.raw.create(f"{PREFIX}/pb/pb-20210101-test/state", '{"pb": "info"}')
             txn.raw.create(f"{PREFIX}/pb/pb-20220101-test/state", '{"pb": "info"}')
-            txn.raw.create(
-                f"{PREFIX}/workflow/batch:test:0.0.0", '{"image": "image"}'
-            )
-            txn.raw.create(
-                f"{PREFIX}/workflow/batch:test:0.0.1", '{"image": "image"}'
-            )
+            txn.raw.create(f"{PREFIX}/workflow/batch:test:0.0.0", '{"image": "image"}')
+            txn.raw.create(f"{PREFIX}/workflow/batch:test:0.0.1", '{"image": "image"}')
         except ConfigCollision:
             # if still in db, do not recreate
             pass
@@ -422,22 +416,23 @@ def test_cmd_delete_recursive(temp_cfg):
         assert len(keys) == 0
 
 
-@pytest.mark.parametrize("workflow_def",[
-    STRUCTURED_WORKFLOW, FLAT_WORKFLOW
-])
+@pytest.mark.parametrize("workflow_def", [STRUCTURED_WORKFLOW, FLAT_WORKFLOW])
 def test_parse_definitions_for_import(workflow_def):
     """
     Parse workflow definitions from structured and from flat dictionaries.
     """
     result = parse_definitions(workflow_def)
-    expected_keys = [("batch", "test_batch", "0.2.2"), ("realtime", "test_realtime", "0.2.2")]
-    expected_values = ["some-repo/sdp-prototype/workflow-test-batch:0.2.2",
-                       "some-repo/sdp-prototype/workflow-test-realtime:0.2.2"]
+    expected_keys = [
+        ("batch", "test_batch", "0.2.2"),
+        ("realtime", "test_realtime", "0.2.2"),
+    ]
+    expected_values = [
+        "some-repo/sdp-prototype/workflow-test-batch:0.2.2",
+        "some-repo/sdp-prototype/workflow-test-realtime:0.2.2",
+    ]
 
     assert len(result) == 2
-    assert sorted(list(result.keys())) == sorted(
-        expected_keys
-    )
+    assert sorted(list(result.keys())) == sorted(expected_keys)
     assert list(result.values())[0]["image"] in expected_values
     assert list(result.values())[1]["image"] in expected_values
 
@@ -456,21 +451,19 @@ def test_import_workflows(mock_backend, etcd3):
     # workflows to be imported
     workflows = {
         ("batch", "test", "0.0.0"): {"image": "batch-test:0.0.0"},  # to update
-        ("realtime", "test", "0.1.0"): {"image": "realtime-test:0.1.0"}  # to be inserted
+        ("realtime", "test", "0.1.0"): {
+            "image": "realtime-test:0.1.0"
+        },  # to be inserted
     }
 
     # keys already in db (added in first txn loop)
     keys_in_db = [
         f"{PREFIX}/workflow/batch:test:0.0.0",  # to be updated
-        f"{PREFIX}/workflow/batch:test:0.0.1"  # to be deleted
+        f"{PREFIX}/workflow/batch:test:0.0.1",  # to be deleted
     ]
     for txn in cfg.txn():
-        txn.raw.create(
-            keys_in_db[0], '{"image": "image"}'
-        )
-        txn.raw.create(
-            keys_in_db[1], '{"image": "image"}'
-        )
+        txn.raw.create(keys_in_db[0], '{"image": "image"}')
+        txn.raw.create(keys_in_db[1], '{"image": "image"}')
 
     # double check that keys are there and value is as created above,
     # then import workflows from dict
@@ -483,7 +476,7 @@ def test_import_workflows(mock_backend, etcd3):
     # keys in db after importing
     updated_keys_in_db = [
         f"{PREFIX}/workflow/batch:test:0.0.0",  # updated
-        f"{PREFIX}/workflow/realtime:test:0.1.0"  # added
+        f"{PREFIX}/workflow/realtime:test:0.1.0",  # added
     ]
 
     # test that one key is correctly updated, one removed, and one added

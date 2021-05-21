@@ -37,7 +37,7 @@ def _get_data_from_db(txn: Transaction, path: str):
     return values_dict
 
 
-def _log_results(key: str, value: str,  list_values=True, quiet_logging=False):
+def _log_results(key: str, value: str, list_values=True, quiet_logging=False):
     """Log information based on user input arguments."""
     if quiet_logging:
         if list_values:
@@ -65,7 +65,7 @@ def cmd_list(txn, path, args):
 
     if args["pb"] and args["<date>"]:
         if not quiet:
-            LOG.info("Processing blocks for date %s: ", args['<date>'])
+            LOG.info("Processing blocks for date %s: ", args["<date>"])
 
         for key, value in values_dict.items():
             if args["<date>"] in key:
@@ -73,7 +73,7 @@ def cmd_list(txn, path, args):
 
     elif args["workflow"] and args["<type>"]:
         if not quiet:
-            LOG.info("Workflow definitions of type %s: ", args['<type>'])
+            LOG.info("Workflow definitions of type %s: ", args["<type>"])
 
         for key, value in values_dict.items():
             if args["<type>"].lower() in key:

@@ -28,6 +28,7 @@ class MockConfig:
     # pylint: disable=no-self-use
     # pylint: disable=too-few-public-methods
     """MockConfig object for testing"""
+
     def __init__(self):
         pass
 
@@ -262,7 +263,7 @@ def test_sdp_update_main(
         ("--all --prefix=/test prefix", "/test", ["prefix", "/test"]),
         ("deployment depID", "/deploy/depID", False),
         ("workflow batch:test:0.0.0", "/workflow/batch:test:0.0.0", False),
-        ("--prefix=/test/ deployment depID", "/test/deploy/depID", False)
+        ("--prefix=/test/ deployment depID", "/test/deploy/depID", False),
     ],
 )
 @patch(f"{PATH_PREFIX}.{SDP_DELETE}.cmd_delete")
