@@ -559,7 +559,7 @@ def test_import_workflows(mock_backend, etcd3):
         assert json.loads(txn.raw.get(keys_in_db[0]))["image"] == "image"
         assert txn.raw.list_keys(f"{etcd_prefix}/workflow", recurse=8) == keys_in_db
 
-        import_workflows(txn, workflows, sync=True, prefix=etcd_prefix)
+        import_workflows(txn, workflows, sync=True)
 
     # keys in db after importing
     updated_keys_in_db = [

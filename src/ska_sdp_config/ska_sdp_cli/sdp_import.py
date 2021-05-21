@@ -15,8 +15,6 @@ Options:
 
 TODO: add example of what the file should be like?
 """
-# pylint: disable=protected-access
-# pylint: disable=too-many-arguments
 
 import logging
 import os
@@ -28,32 +26,6 @@ from docopt import docopt
 
 LOG = logging.getLogger("ska-sdp")
 WORKFLOW_PREFIX = "workflow"
-
-
-def _workflow_path(wf_type, wf_id, version, prefix=""):
-    return f"{prefix}/{WORKFLOW_PREFIX}/{wf_type}:{wf_id}:{version}"
-
-
-def _list_workflows(txn, prefix=""):
-    keys = txn.raw.list_keys(f"{prefix}/{WORKFLOW_PREFIX}/")
-    workflows = [tuple(k.replace(prefix, "").split("/")[2].split(":")) for k in keys]
-    return workflows
-
-
-def _get_workflow(txn, wf_type, wf_id, version, prefix=""):
-    return txn._get(_workflow_path(wf_type, wf_id, version, prefix))
-
-
-def _create_workflow(txn, wf_type, wf_id, version, workflow, prefix=""):
-    txn._create(_workflow_path(wf_type, wf_id, version, prefix), workflow)
-
-
-def _update_workflow(txn, wf_type, wf_id, version, workflow, prefix=""):
-    txn._update(_workflow_path(wf_type, wf_id, version, prefix), workflow)
-
-
-def _delete_workflow(txn, wf_type, wf_id, version, prefix=""):
-    txn.raw.delete(_workflow_path(wf_type, wf_id, version, prefix))
 
 
 def read_input(input_object: str) -> Dict:
@@ -96,7 +68,7 @@ def _parse_structured(definitions: Dict) -> Dict:
 
 def _parse_flat(definitions):
     """
-    Parse flat workflow definitions. TODO: what is "flat"?
+    Parse flat workflow definitions.
 
     :param definitions: flat workflow definitions
     :returns: dictionary mapping (type, id, version) to definition.
@@ -124,35 +96,34 @@ def parse_definitions(definitions: Dict) -> Dict:
     return workflows
 
 
-def import_workflows(txn, workflows: Dict, sync: bool = True, prefix: str = ""):
+def import_workflows(txn, workflows: Dict, sync: bool = True):
     """
     Import the workflow definitions into the Configuration Database.
 
     :param txn: Config object transaction
     :param workflows: workflow definitions
     :param sync: delete workflows not in the input
-    :param prefix: custom-prefix to add to the workflow keys, used for testing only
     """
     # Create sorted list of existing and new workflows
-    existing_workflows = _list_workflows(txn, prefix=prefix)
+    existing_workflows = txn.list_workflows()
     all_workflows = sorted(list(set(existing_workflows) | set(workflows.keys())))
 
     change = False
     for key in all_workflows:
         if key in workflows:
-            old_value = _get_workflow(txn, *key, prefix=prefix)
+            old_value = txn.get_workflow(*key)
             new_value = workflows[key]
             if old_value is None:
                 LOG.info("Creating %s", key)
-                _create_workflow(txn, *key, new_value, prefix=prefix)
+                txn.create_workflow(*key, new_value)
                 change = True
             elif new_value != old_value:
                 LOG.info("Updating %s", key)
-                _update_workflow(txn, *key, new_value, prefix=prefix)
+                txn.update_workflow(*key, new_value)
                 change = True
         elif sync:
             LOG.info("Deleting %s", key)
-            _delete_workflow(txn, *key, prefix=prefix)
+            txn.delete_workflow(*key)
             change = True
     if not change:
         LOG.info("No changes")
