@@ -63,3 +63,30 @@ See "Basic usage" above for instructions on how to install an ``etcd`` backend o
 
 Once you started the database (run ``etcd`` in the command line),
 you will be able to run the tests using pytest.
+
+Alternative way is by using the two shell scripts in the scripts directory:
+
+``docker_run_etcd.sh`` -> Which runs etcd in a Docker container for testing the code.
+``docker_run_python.sh`` -> Runs a python container and connects to the etcd instance.
+
+Run the scripts from the root of the repository:
+
+.. code-block:: bash
+
+    bash scripts/docker_run_etcd.sh
+    bash scripts/docker_run_python.sh
+
+Once the container is started and mounted to the local directory.
+
+Install the dependencies:
+
+.. code-block:: bash
+
+    pip install -r requirements.txt -r requirements-test.txt
+
+Then run the tests:
+
+.. code-block:: bash
+
+    python setup.py test
+

@@ -47,3 +47,14 @@ associated workflows.
 This package also comes with a command line utility for easy access to
 configuration data. See documentation at: 
 `CLI for SDP <https://developer.skatelescope.org/projects/ska-sdp-config/en/latest/cli.html>`
+
+## Releasing the python package
+
+When new release is ready:
+
+  - check out master
+  - update CHANGELOG.md
+  - commit changes
+  - make release-[patch||minor||major]
+
+Note: bumpver needs to be installed
