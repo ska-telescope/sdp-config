@@ -46,7 +46,7 @@ associated workflows.
 
 This package also comes with a command line utility for easy access to
 configuration data. See documentation at: 
-`CLI for SDP <https://developer.skatelescope.org/projects/ska-sdp-config/en/latest/cli.html>`
+[CLI for SDP](https://developer.skatelescope.org/projects/ska-sdp-config/en/latest/cli.html)
 
 ## Releasing the python package
 
