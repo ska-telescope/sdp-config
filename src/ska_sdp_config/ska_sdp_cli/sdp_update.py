@@ -39,14 +39,13 @@ from docopt import docopt
 LOG = logging.getLogger("ska-sdp")
 
 
-def cmd_update(txn, key, value, _args):
+def cmd_update(txn, key, value):
     """
     Update raw key value.
 
     :param txn: Config object transaction
     :param key: Key in the Config DB to update the value of
     :param value: new value to update the key with
-    :param _args: CLI input args TODO: remove this, it's not used..
     """
     txn.raw.update(key, value)
 
@@ -100,10 +99,7 @@ def cmd_edit(txn, key, config=None):
 
 
 def main(argv, config):
-    "Run ska-sdp update / edit."
-    # TODO: should config be an input, or can I define the object here?
-    # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
-    #   --> see cli.py
+    """Run ska-sdp update / edit."""
     args = docopt(__doc__, argv=argv)
     key = args["<key>"]
 
@@ -112,7 +108,7 @@ def main(argv, config):
 
     for txn in config.txn():
         if args["update"]:
-            cmd_update(txn, key, args["<value>"], args)
+            cmd_update(txn, key, args["<value>"])
 
         if args["edit"]:
             cmd_edit(txn, key, config=config)

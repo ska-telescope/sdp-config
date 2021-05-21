@@ -24,30 +24,28 @@ Options:
 import logging
 from docopt import docopt
 
+from ska_sdp_config.config import Transaction
+
 LOG = logging.getLogger("ska-sdp")
 
 
-def get_data_from_db(txn, path, args):
+def _get_data_from_db(txn: Transaction, path: str):
     """Get all key-value pairs from Config DB path."""
-    recurse = 8 if args["-R"] else 0
-    keys = txn.raw.list_keys(path, recurse=recurse)
+    keys = txn.raw.list_keys(path, recurse=8)
     values_dict = {key: txn.raw.get(key) for key in keys}
 
     return values_dict
 
 
-def _log_results(key, value, args):
+def _log_results(key: str, value: str,  list_values=True, quiet_logging=False):
     """Log information based on user input arguments."""
-    quiet = args["--quiet"]
-    vals = args["--values"]
-
-    if quiet:
-        if vals:
+    if quiet_logging:
+        if list_values:
             LOG.info(value)
         else:
             LOG.info(key)
     else:
-        if vals:
+        if list_values:
             LOG.info("%s = %s", key, value)
         else:
             LOG.info(key)
@@ -61,8 +59,9 @@ def cmd_list(txn, path, args):
     :param path: path within the config db to list contents of
     :param args: CLI input args
     """
-    values_dict = get_data_from_db(txn, path, args)
+    values_dict = _get_data_from_db(txn, path)
     quiet = args["--quiet"]
+    list_values = args["--values"]
 
     if args["pb"] and args["<date>"]:
         if not quiet:
@@ -70,7 +69,7 @@ def cmd_list(txn, path, args):
 
         for key, value in values_dict.items():
             if args["<date>"] in key:
-                _log_results(key, value, args)
+                _log_results(key, value, list_values=list_values, quiet_logging=quiet)
 
     elif args["workflow"] and args["<type>"]:
         if not quiet:
@@ -78,21 +77,18 @@ def cmd_list(txn, path, args):
 
         for key, value in values_dict.items():
             if args["<type>"].lower() in key:
-                _log_results(key, value, args)
+                _log_results(key, value, list_values=list_values, quiet_logging=quiet)
 
     else:
         if not quiet:
             LOG.info("Keys with prefix %s: ", path)
 
         for key, value in values_dict.items():
-            _log_results(key, value, args)
+            _log_results(key, value, list_values=list_values, quiet_logging=quiet)
 
 
 def main(argv, config):
     """Run ska-sdp list."""
-    # TODO: should config be an input, or can I define the object here?
-    # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
-    #   --> see cli.py
     args = docopt(__doc__, argv=argv)
 
     object_dict = {
@@ -101,8 +97,6 @@ def main(argv, config):
         "deploy": args["deployment"],
         "sbi": args["sbi"],
     }
-
-    args["-R"] = True
 
     if args["--prefix"]:
         path = args["--prefix"].rstrip("/") + "/"

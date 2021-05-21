@@ -42,26 +42,24 @@ from ska_sdp_config import entity
 LOG = logging.getLogger("ska-sdp")
 
 
-def cmd_create(txn, key, value, _args):
+def cmd_create(txn, key, value):
     """
     Create raw key.
 
     :param txn: Config object transaction
     :param key: key within the config db to be created
     :param value: value of new key to be added
-    :param _args: CLI input args TODO: remove, not used, why is it here?
     """
     txn.raw.create(key, value)
 
 
-def cmd_create_pb(txn, workflow, parameters, _args):
+def cmd_create_pb(txn, workflow, parameters):
     """
     Create a processing block to run a workflow.
 
     :param txn: Config object transaction
     :param workflow: dict of workflow information: type, id, version
     :param parameters: dict of workflow parameters, it can be None
-    :param _args: CLI input args TODO: remove, not used
 
     :return pb_id: ID of the created processing block
     """
@@ -72,32 +70,29 @@ def cmd_create_pb(txn, workflow, parameters, _args):
         pars = {}
 
     # Create new processing block ID, create processing block
-    pb_id = txn.new_processing_block_id("sdpcfg")  # TODO: replace this with ska-sdp?
+    pb_id = txn.new_processing_block_id("sdp-cli")
     txn.create_processing_block(
         entity.ProcessingBlock(pb_id, None, workflow, parameters=pars)
     )
     return pb_id
 
 
-def cmd_deploy(txn, typ, deploy_id, parameters):
+def cmd_deploy(txn, deploy_type, deploy_id, parameters):
     """
     Create a deployment.
 
     :param txn: Config object transaction
-    :param typ: Type of the deployment, currently "helm" only
+    :param deploy_type: Type of the deployment, currently "helm" only
     :param deploy_id: ID of the deployment
     :param parameters: String of deployment parameters in the form of:
                        '{"chart": <chart-name>, "values": <dict-of-values>}'
     """
-    dct = yaml.safe_load(parameters)
-    txn.create_deployment(entity.Deployment(deploy_id, typ, dct))
+    params_dict = yaml.safe_load(parameters)
+    txn.create_deployment(entity.Deployment(deploy_id, deploy_type, params_dict))
 
 
 def main(argv, config):
     """Run ska-sdp create."""
-    # TODO: should config be an input, or can I define the object here?
-    # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
-    #   --> see cli.py
     args = docopt(__doc__, argv=argv)
 
     object_dict = {"workflow": args["workflow"], "sbi": args["sbi"]}
@@ -110,7 +105,7 @@ def main(argv, config):
         workflow = {"type": workflow[0], "id": workflow[1], "version": workflow[2]}
 
         for txn in config.txn():
-            pb_id = cmd_create_pb(txn, workflow, args["<parameters>"], args)
+            pb_id = cmd_create_pb(txn, workflow, args["<parameters>"])
 
         LOG.info("Processing block created with pb_id: %s", pb_id)
         return
@@ -131,6 +126,6 @@ def main(argv, config):
     path = path + "/" + args["<key>"]
 
     for txn in config.txn():
-        cmd_create(txn, path, args["<value>"], args)
+        cmd_create(txn, path, args["<value>"])
 
     LOG.info("%s created", path)

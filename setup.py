@@ -29,7 +29,7 @@ setuptools.setup(
     tests_require=requirements_from('requirements-test.txt'),
     package_dir={'': 'src'},
     packages=setuptools.find_packages('src'),
-    scripts=['scripts/sdpcfg', 'scripts/ska-sdp'],
+    scripts=['scripts/ska-sdp'],
     classifiers=[
         'Topic :: Database :: Front-Ends',
         'Topic :: Scientific/Engineering :: Astronomy',

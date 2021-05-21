@@ -24,6 +24,8 @@ import requests
 import yaml
 from docopt import docopt
 
+from ska_sdp_config.config import Transaction
+
 LOG = logging.getLogger("ska-sdp")
 WORKFLOW_PREFIX = "workflow"
 
@@ -66,7 +68,7 @@ def _parse_structured(definitions: Dict) -> Dict:
     return workflows
 
 
-def _parse_flat(definitions):
+def _parse_flat(definitions: Dict) -> Dict:
     """
     Parse flat workflow definitions.
 
@@ -96,7 +98,7 @@ def parse_definitions(definitions: Dict) -> Dict:
     return workflows
 
 
-def import_workflows(txn, workflows: Dict, sync: bool = True):
+def import_workflows(txn: Transaction, workflows: Dict, sync: bool = True):
     """
     Import the workflow definitions into the Configuration Database.
 

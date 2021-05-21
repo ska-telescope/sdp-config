@@ -25,17 +25,18 @@ from docopt import docopt
 LOG = logging.getLogger("ska-sdp")
 
 
-def cmd_delete(txn, path, args):
+def cmd_delete(txn, path, recurse=True, quiet=False):
     """
     Delete a key from the Config DB.
 
     :param txn: Config object transaction
     :param path: path within the Config DB to delete
-    :param args: CLI input args
+    :param recurse: if True, run recursive query of key as a prefix
+    :param quiet: quiet logging
     """
-    if args["-R"]:
+    if recurse:
         for key in txn.raw.list_keys(path, recurse=8):
-            if not args["--quiet"]:
+            if not quiet:
                 LOG.info(key)
             txn.raw.delete(key)
     else:
@@ -48,9 +49,6 @@ def _get_input():
 
 def main(argv, config):
     """Run ska-sdp delete."""
-    # TODO: should config be an input, or can I define the object here?
-    # TODO: is it ok to get the txn here, or does it have to be within ska_sdp for all commands?
-    #   --> see cli.py
     args = docopt(__doc__, argv=argv)
 
     object_dict = {
@@ -60,7 +58,6 @@ def main(argv, config):
         "sbi": args["sbi"],
     }
     prefix = args["--prefix"]
-    args["-R"] = True
     path = ""
 
     cont = False
@@ -107,6 +104,6 @@ def main(argv, config):
             break  # only one can be true, or none
 
     for txn in config.txn():
-        cmd_delete(txn, path, args)
+        cmd_delete(txn, path, recurse=True, quiet=args["--quiet"])
 
     LOG.info("Deleted above keys with prefix %s.", path)

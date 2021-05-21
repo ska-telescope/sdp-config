@@ -27,19 +27,19 @@ do with a specific SDP Object.
 
 Commands:
 
-* list
-* get/watch
-* create
-* update/edit
-* delete
-* import
+- list
+- get/watch
+- create
+- update/edit
+- delete
+- import
 
 SDP Objects:
 
-* pb (processing block)
-* workflow (workflow definition)
-* deployment
-* sbi (scheduling block instance)
+- pb (processing block)
+- workflow (workflow definition)
+- deployment
+- sbi (scheduling block instance)
 
 .. list-table::
    :widths: 5 5 5 5 5 5
@@ -95,14 +95,24 @@ SDP Objects:
      - * if **--prefix**: append prefix in front of path and perform same
        * deletion as listed onder SDP object type.
    * - **import**
-     - x
-     - import workflow defs from file or URL
-     - x
-     - x
+     - n/a
+     - import workflow definitions from file or URL
+     - n/a
+     - n/a
      -
 
 Usage
 -----
+
+Backend-related environment variables::
+
+  SDP_CONFIG_BACKEND   Database backend (default etcd3)
+  SDP_CONFIG_HOST      Database host address (default 127.0.0.1)
+  SDP_CONFIG_PORT      Database port (default 2379)
+  SDP_CONFIG_PROTOCOL  Database access protocol (default http)
+  SDP_CONFIG_CERT      Client certificate
+  SDP_CONFIG_USERNAME  User name
+  SDP_CONFIG_PASSWORD  User password
 
 .. code-block:: bash
 
