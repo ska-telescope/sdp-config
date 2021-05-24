@@ -1,5 +1,4 @@
 etcd3-py
-docopt-ng
+docopt
 pyyaml
 Deprecated
-bumpver

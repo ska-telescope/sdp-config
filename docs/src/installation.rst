@@ -53,11 +53,7 @@ Command line
 This package also comes with a command line utility for easy access to
 configuration data. For instance run:
 
-.. code-block:: bash
-
-   sdpcfg list values /pb/
-
-to query all processing blocks.
+:ref:`cli`
 
 Running unit tests locally
 --------------------------

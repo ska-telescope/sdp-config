@@ -45,13 +45,8 @@ associated workflows.
 ## Command line
 
 This package also comes with a command line utility for easy access to
-configuration data. For instance run:
-
-```bash
-sdpcfg list values /pb/
-```
-
-To query all processing blocks.
+configuration data. See documentation at: 
+[CLI for SDP](https://developer.skatelescope.org/projects/ska-sdp-config/en/latest/cli.html)
 
 ## Releasing the python package
 

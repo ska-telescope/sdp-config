@@ -1,5 +1,3 @@
-"""Tests for sdpcfg command line utility."""
-
 # pylint: disable=missing-docstring,redefined-outer-name
 
 import pytest
