@@ -230,9 +230,9 @@ Usage
         -q, --quiet   Cut back on unnecessary output
 
     Example:
-        ska-sdp create sbi my_new_sbi '{"test": true}'
+        ska-sdp create sbi sbi-test-20210524-00000 '{"test": true}'
         Result in the config db:
-            key: /sbi/my_new_sbi
+            key: /sbi/sbi-test-20210524-00000
             value: {"test": true}
 
     Note: You cannot create processing blocks apart from when they are called to run a workflow.
@@ -254,8 +254,6 @@ Usage
 
     Arguments:
         <key>       Key within the Config DB. Cannot be a processing block related key.
-                    To get the list of all keys:
-                        ska-sdp list -a
         <pb-id>     Processing block id whose state is to be changed.
         <value>     Value to update the key/pb state with.
 
@@ -269,6 +267,14 @@ Usage
                     Recommended: vi, vim, nano (i.e. command line-based editors)
             Example: EDITOR=vi ska-sdp edit <key>
         Processing blocks cannot be changed, apart from their state.
+
+    Example:
+        ska-sdp edit sbi sbi-test-20210524-00000
+            --> key that's edited: /sbi/sbi-test-20210524-00000
+        ska-sdp edit workflow batch:test:0.0.0
+            --> key that's edited: /workflow/batch:test:0.0.0
+        ska-sdp edit pb-state some-pb-id-0000
+            --> key that's edited: /pb/some-pb-id-0000/state
 
 
 .. code-block:: bash
@@ -301,7 +307,7 @@ Usage
     Import workflow definitions into the Configuration Database.
 
     Usage:
-        ska-sdp import [options] <file-or-url>
+        ska-sdp import workflows [options] <file-or-url>
         ska-sdp import (-h|--help)
 
     Arguments:
