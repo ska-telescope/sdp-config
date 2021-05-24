@@ -26,9 +26,9 @@ Options:
     -q, --quiet   Cut back on unnecessary output
 
 Example:
-    ska-sdp create sbi my_new_sbi '{"test": true}'
+    ska-sdp create sbi sbi-test-20210524-00000 '{"test": true}'
     Result in the config db:
-        key: /sbi/my_new_sbi
+        key: /sbi/sbi-test-20210524-00000
         value: {"test": true}
 
 Note: You cannot create processing blocks apart from when they are called to run a workflow.

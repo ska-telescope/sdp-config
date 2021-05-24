@@ -5,7 +5,7 @@ CLI to interact with SDP
 
 Command Line Interface: ``ska-sdp``
 
-To run the CLI, you will have to start the ``console pod``
+To run the CLI, you must start a shell in the ``console pod``.
 (assuming you have SDP deployed in Kubernetes/Minikube, for instructions follow:
 `SDP standalone <https://developer.skatelescope.org/projects/ska-sdp-integration/en/latest/running/standalone.html>`_)
 

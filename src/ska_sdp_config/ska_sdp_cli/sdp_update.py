@@ -26,8 +26,8 @@ Note:
     Processing blocks cannot be changed, apart from their state.
 
 Example:
-    ska-sdp edit sbi my-sbi/test
-        --> key that's edited: /sbi/my-sbi/test
+    ska-sdp edit sbi sbi-test-20210524-00000
+        --> key that's edited: /sbi/sbi-test-20210524-00000
     ska-sdp edit workflow batch:test:0.0.0
         --> key that's edited: /workflow/batch:test:0.0.0
     ska-sdp edit pb-state some-pb-id-0000
