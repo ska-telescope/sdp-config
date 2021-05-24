@@ -121,7 +121,7 @@ When running `ska-sdp edit`::
 Usage
 -----
 
-.. code-block:: bash
+.. code-block:: none
 
     > ska-sdp --help
 
@@ -149,7 +149,7 @@ Usage
         import          Import workflow definitions from file or URL
 
 
-.. code-block:: bash
+.. code-block:: none
 
     > ska-sdp list --help
 
@@ -176,7 +176,7 @@ Usage
         --prefix=<prefix>  Path prefix (if other than standard Config paths, e.g. for testing)
 
 
-.. code-block:: bash
+.. code-block:: none
 
     > ska-sdp (get|watch) --help
 
@@ -199,7 +199,7 @@ Usage
         -q, --quiet   Cut back on unnecessary output
 
 
-.. code-block:: bash
+.. code-block:: none
 
     > ska-sdp create --help
 
@@ -238,7 +238,7 @@ Usage
     Note: You cannot create processing blocks apart from when they are called to run a workflow.
 
 
-.. code-block:: bash
+.. code-block:: none
 
     > ska-sdp (update|edit) --help
 
@@ -277,7 +277,7 @@ Usage
             --> key that's edited: /pb/some-pb-id-0000/state
 
 
-.. code-block:: bash
+.. code-block:: none
 
     > ska-sdp delete --help
 
@@ -300,7 +300,7 @@ Usage
         --prefix=<prefix>      Path prefix (if other than standard Config paths, e.g. for testing)
 
 
-.. code-block:: bash
+.. code-block:: none
 
     > ska-sdp import --help
 
