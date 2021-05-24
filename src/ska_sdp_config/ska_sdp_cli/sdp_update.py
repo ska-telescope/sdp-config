@@ -11,8 +11,6 @@ Usage:
 
 Arguments:
     <key>       Key within the Config DB. Cannot be a processing block related key.
-                To get the list of all keys:
-                    ska-sdp list -a
     <pb-id>     Processing block id whose state is to be changed.
     <value>     Value to update the key/pb state with.
 
@@ -26,6 +24,14 @@ Note:
                 Recommended: vi, vim, nano (i.e. command line-based editors)
         Example: EDITOR=vi ska-sdp edit <key>
     Processing blocks cannot be changed, apart from their state.
+
+Example:
+    ska-sdp edit sbi my-sbi/test
+        --> key that's edited: /sbi/my-sbi/test
+    ska-sdp edit workflow batch:test:0.0.0
+        --> key that's edited: /workflow/batch:test:0.0.0
+    ska-sdp edit pb-state some-pb-id-0000
+        --> key that's edited: /pb/some-pb-id-0000/state
 """
 import json
 import logging
@@ -42,7 +48,7 @@ LOG = logging.getLogger("ska-sdp")
 
 
 class EditorNotFoundError(Exception):
-    pass
+    """Raise when the EDITOR env.var is not set."""
 
 
 def cmd_update(txn, key, value):
@@ -91,9 +97,9 @@ def cmd_edit(txn, key):
         # Start editor
         try:
             subprocess.call([os.environ["EDITOR"] + " " + fname], shell=True)
-        except KeyError:
+        except KeyError as err:
             # if EDITOR env var is not set, a KeyError is raised
-            raise EditorNotFoundError
+            raise EditorNotFoundError from err
 
         # Read new value in
         with open(fname) as tmp2:
@@ -111,10 +117,20 @@ def cmd_edit(txn, key):
 def main(argv, config):
     """Run ska-sdp update / edit."""
     args = docopt(__doc__, argv=argv)
+    object_dict = {
+        "workflow": args["workflow"],
+        "sbi": args["sbi"],
+        "deploy": args["deployment"],
+    }
     key = args["<key>"]
 
     if args["pb-state"]:
         key = f"/pb/{args['<pb-id>']}/state"
+
+    for sdp_object, exists in object_dict.items():
+        if exists:
+            key = "/" + sdp_object + "/" + key
+            break  # only one can be true, or none
 
     for txn in config.txn():
         if args["update"]:
@@ -126,7 +142,8 @@ def main(argv, config):
             except EditorNotFoundError:
                 LOG.error(
                     "Please set the EDITOR environment variable with a valid"
-                    "command line-based text editor executable, then rerun. (See 'ska-sdp edit -h'.)"
+                    "command line-based text editor executable, then rerun. "
+                    "(See 'ska-sdp edit -h'.)"
                 )
                 return
 

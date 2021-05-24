@@ -219,11 +219,11 @@ def test_sdp_create_main(
     [
         (
             "update",
-            "--quiet workflow /workflow/batch:test:0.0.0 new-data",
+            "--quiet workflow batch:test:0.0.0 new-data",
             "/workflow/batch:test:0.0.0",
         ),
         ("update", "pb-state pb-20201010-test new-data", "/pb/pb-20201010-test/state"),
-        ("edit", "workflow /workflow/batch:test:0.0.0", "/workflow/batch:test:0.0.0"),
+        ("edit", "deployment new-deployment", "/deploy/new-deployment"),
         ("edit", "pb-state pb-20201010-test", "/pb/pb-20201010-test/state"),
     ],
 )
@@ -315,3 +315,29 @@ def test_sdp_import_main(mock_import_workflows, options, sync):
     # [0][1] --> [1] contains the optional arguments, like --sync
     result_calls = mock_import_workflows.call_args_list[0][1]
     assert result_calls["sync"] == sync
+
+
+def test_sdp_import_main_bad_file():
+    """
+    Error logged when the file that is used doesn't exist.
+    """
+    config = MockConfig()
+    argv = ["import", "workflows", "bad.json"]
+
+    with patch("logging.Logger.error") as mock_log:
+        sdp_import.main(argv, config)
+
+    mock_log.assert_called_with("Bad file name or URL. Please fix, and retry.")
+
+
+def test_sdp_import_main_wrong_url():
+    """
+    Error logged when the URL used is not accessible.
+    """
+    config = MockConfig()
+    argv = ["import", "workflows", "https://foobar/bad_url.json"]
+
+    with patch("logging.Logger.error") as mock_log:
+        sdp_import.main(argv, config)
+
+    mock_log.assert_called_with("Bad file name or URL. Please fix, and retry.")

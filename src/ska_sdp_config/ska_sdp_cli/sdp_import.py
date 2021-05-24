@@ -11,7 +11,6 @@ Arguments:
 Options:
     -h, --help          Show this screen
     --sync              Delete workflows not in the input
-        TODO: should it be called delete? or maybe different definition?
 """
 
 import logging
@@ -21,6 +20,8 @@ from typing import Dict
 import requests
 import yaml
 from docopt import docopt
+from yaml.parser import ParserError
+from yaml.scanner import ScannerError
 
 from ska_sdp_config.config import Transaction
 
@@ -133,7 +134,18 @@ def main(argv, config):
     args = docopt(__doc__, argv=argv)
 
     LOG.info("Importing workflow definitions from %s", args["<file-or-url>"])
-    definitions = read_input(args["<file-or-url>"])
+
+    try:
+        definitions = read_input(args["<file-or-url>"])
+    except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError):
+        # MissingSchema exception raised when json file doesn't exist
+        # ConnectionError raised when URL is wrong
+        LOG.error("Bad file name or URL. Please fix, and retry.")
+        return
+    except (ParserError, ScannerError):
+        LOG.error("Malformed YAML/JSON file. Please fix, and retry.")
+        return
+
     workflows = parse_definitions(definitions)
 
     for txn in config.txn():
