@@ -36,7 +36,13 @@ import yaml
 
 from docopt import docopt
 
+from ska_sdp_config.config import dict_to_json
+
 LOG = logging.getLogger("ska-sdp")
+
+
+class EditorNotFoundError(Exception):
+    pass
 
 
 def cmd_update(txn, key, value):
@@ -50,7 +56,7 @@ def cmd_update(txn, key, value):
     txn.raw.update(key, value)
 
 
-def cmd_edit(txn, key, config=None):
+def cmd_edit(txn, key):
     """
     Edit the value of a raw key in a CLI text editor.
     Only works if the editor's executable is supplied through the EDITOR env. var.
@@ -83,13 +89,17 @@ def cmd_edit(txn, key, config=None):
         fname = tmp.name
 
         # Start editor
-        subprocess.call([os.environ["EDITOR"] + " " + fname], shell=True)
+        try:
+            subprocess.call([os.environ["EDITOR"] + " " + fname], shell=True)
+        except KeyError:
+            # if EDITOR env var is not set, a KeyError is raised
+            raise EditorNotFoundError
 
         # Read new value in
         with open(fname) as tmp2:
             new_val = tmp2.read()
         if have_yaml:
-            new_val = config.dict_to_json(yaml.safe_load(new_val))
+            new_val = dict_to_json(yaml.safe_load(new_val))
 
     # Apply update
     if new_val == val:
@@ -111,6 +121,13 @@ def main(argv, config):
             cmd_update(txn, key, args["<value>"])
 
         if args["edit"]:
-            cmd_edit(txn, key, config=config)
+            try:
+                cmd_edit(txn, key)
+            except EditorNotFoundError:
+                LOG.error(
+                    "Please set the EDITOR environment variable with a valid"
+                    "command line-based text editor executable, then rerun. (See 'ska-sdp edit -h'.)"
+                )
+                return
 
     LOG.info("%s updated.", key)

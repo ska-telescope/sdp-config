@@ -2,7 +2,7 @@
 Import workflow definitions into the Configuration Database.
 
 Usage:
-    ska-sdp import [options] <file-or-url>
+    ska-sdp import workflows [options] <file-or-url>
     ska-sdp import (-h|--help)
 
 Arguments:
@@ -12,8 +12,6 @@ Options:
     -h, --help          Show this screen
     --sync              Delete workflows not in the input
         TODO: should it be called delete? or maybe different definition?
-
-TODO: add example of what the file should be like?
 """
 
 import logging
@@ -140,3 +138,5 @@ def main(argv, config):
 
     for txn in config.txn():
         import_workflows(txn, workflows, sync=args["--sync"])
+
+    LOG.info("Import finished successfully.")

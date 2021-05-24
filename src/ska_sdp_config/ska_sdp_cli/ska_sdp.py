@@ -52,17 +52,23 @@ def main(argv):
     if args[COMMAND] == "list":
         sdp_list.main(argv, cfg)
 
-    if args[COMMAND] == "get" or args[COMMAND] == "watch":
+    elif args[COMMAND] == "get" or args[COMMAND] == "watch":
         sdp_get.main(argv, cfg)
 
-    if args[COMMAND] == "create":
+    elif args[COMMAND] == "create":
         sdp_create.main(argv, cfg)
 
-    if args[COMMAND] == "update" or args[COMMAND] == "edit":
+    elif args[COMMAND] == "update" or args[COMMAND] == "edit":
         sdp_update.main(argv, cfg)
 
-    if args[COMMAND] == "delete":
+    elif args[COMMAND] == "delete":
         sdp_delete.main(argv, cfg)
 
-    if args[COMMAND] == "import":
+    elif args[COMMAND] == "import":
         sdp_import.main(argv, cfg)
+
+    else:
+        LOG.error(
+            "Command '%s' is not supported. Run 'ska-sdp --help' to view usage.",
+            args[COMMAND],
+        )

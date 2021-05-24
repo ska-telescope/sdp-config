@@ -42,19 +42,40 @@ def main(argv, config):
     """Run ska-sdp get."""
     args = docopt(__doc__, argv=argv)
 
-    if args["<key>"]:
-        for txn in config.txn():
-            cmd_get(txn, args["<key>"], args["--quiet"])
+    try:
+        if args["<key>"]:
+            key = args["<key>"]
+            if key == "pb":
+                LOG.error(
+                    "Cannot 'get' processing block without its ID. Run 'ska-sdp get pb <pb_id>'"
+                )
+                return
 
-            if args["watch"]:
-                txn.loop(wait=True)
+            for txn in config.txn():
+                try:
+                    cmd_get(txn, key, args["--quiet"])
+                except ValueError:
+                    # when not the full key/path is given, Config returns a ValueError
+                    LOG.error(
+                        "'%s' is not a valid key in the Config DB. "
+                        "Run 'ska-sdp list -a' to list all valid keys.",
+                        key,
+                    )
+                    return
 
-    elif args["pb"]:
-        for txn in config.txn():
-            keys = txn.raw.list_keys("/pb", recurse=8)
-            for k in keys:
-                if args["<pb_id>"] in k:
-                    cmd_get(txn, k, args["--quiet"])
+                if args["watch"]:
+                    txn.loop(wait=True)
 
-            if args["watch"]:
-                txn.loop(wait=True)
+        elif args["pb"]:
+            for txn in config.txn():
+                keys = txn.raw.list_keys("/pb", recurse=8)
+                for k in keys:
+                    if args["<pb_id>"] in k:
+                        cmd_get(txn, k, args["--quiet"])
+
+                if args["watch"]:
+                    txn.loop(wait=True)
+
+    except KeyboardInterrupt:
+        if not args["watch"]:
+            raise

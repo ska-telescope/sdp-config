@@ -293,7 +293,10 @@ def test_sdp_delete_main(mock_delete_cmd, options, expected_path, log_message):
 
 @pytest.mark.parametrize(
     "options, sync",
-    [(["import", "my-file"], False), (["import", "--sync", "my-file"], True)],
+    [
+        (["import", "workflows", "my-file"], False),
+        (["import", "workflows", "--sync", "my-file"], True),
+    ],
 )
 @patch(f"{PATH_PREFIX}.{SDP_IMPORT}.import_workflows")
 @patch(f"{PATH_PREFIX}.{SDP_IMPORT}.read_input", Mock())

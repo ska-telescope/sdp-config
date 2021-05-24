@@ -70,7 +70,7 @@ def cmd_create_pb(txn, workflow, parameters):
         pars = {}
 
     # Create new processing block ID, create processing block
-    pb_id = txn.new_processing_block_id("sdp-cli")
+    pb_id = txn.new_processing_block_id("sdpcli")
     txn.create_processing_block(
         entity.ProcessingBlock(pb_id, None, workflow, parameters=pars)
     )
