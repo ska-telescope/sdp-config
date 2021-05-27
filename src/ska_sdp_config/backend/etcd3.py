@@ -246,12 +246,13 @@ class Etcd3Backend:
 
     def delete(
         self,
-        path: str,  # pylint: disable=too-many-arguments
+        path: str,
         must_exist: bool = True,
         recursive: bool = False,
         prefix: bool = False,
         max_depth: int = 16,
     ):
+        # pylint: disable=too-many-arguments
         """
         Delete the given key or key range.
 
