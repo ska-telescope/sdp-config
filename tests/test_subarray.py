@@ -13,7 +13,7 @@ PREFIX = "/__test_subarray"
 # pylint: disable=W0212
 @pytest.fixture(scope="session")
 def cfg():
-    host = os.getenv('SDP_TEST_HOST', '127.0.0.1')
+    host = os.getenv("SDP_TEST_HOST", "127.0.0.1")
     with ska_sdp_config.Config(global_prefix=PREFIX, host=host) as cfg:
         cfg.backend.delete(PREFIX, must_exist=False, recursive=True)
         yield cfg
@@ -21,8 +21,8 @@ def cfg():
 
 
 def test_subarray_list(cfg):
-    subarray1_id = '01'
-    subarray2_id = '02'
+    subarray1_id = "01"
+    subarray2_id = "02"
 
     # Check subarray list is empty
     for txn in cfg.txn():
@@ -50,20 +50,20 @@ def test_subarray_list(cfg):
 
 def test_subarray_create_update(cfg):
 
-    subarray_id = '03'
+    subarray_id = "03"
     state1 = {
-        'sbi_id': 'sbi-test-20200727-00000',
-        'state': 'ON',
-        'obs_state': 'READY',
-        'scan_type': 'science',
-        'scan_id': None
+        "sbi_id": "sbi-test-20200727-00000",
+        "state": "ON",
+        "obs_state": "READY",
+        "scan_type": "science",
+        "scan_id": None,
     }
     state2 = {
-        'sbi_id': 'sbi-test-20200727-00000',
-        'state': 'ON',
-        'obs_state': 'SCANNING',
-        'scan_type': 'science',
-        'scan_id': 1
+        "sbi_id": "sbi-test-20200727-00000",
+        "state": "ON",
+        "obs_state": "SCANNING",
+        "scan_type": "science",
+        "scan_id": 1,
     }
 
     # Subarray has not been created, so should return None
@@ -95,5 +95,5 @@ def test_subarray_create_update(cfg):
         assert state == state2
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main()

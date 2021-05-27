@@ -9,17 +9,13 @@ from ska_sdp_config import config, entity, ConfigCollision
 
 PREFIX = "/__test_pb"
 
-WORKFLOW = {
-    'type': 'realtime',
-    'id': 'test_rt_workflow',
-    'version': '0.0.1'
-}
+WORKFLOW = {"type": "realtime", "id": "test_rt_workflow", "version": "0.0.1"}
 
 
 # pylint: disable=duplicate-code
 @pytest.fixture(scope="session")
 def cfg():
-    host = os.getenv('SDP_TEST_HOST', '127.0.0.1')
+    host = os.getenv("SDP_TEST_HOST", "127.0.0.1")
     with config.Config(global_prefix=PREFIX, host=host) as cfg:
         cfg.backend.delete(PREFIX, must_exist=False, recursive=True)
         yield cfg
@@ -28,19 +24,19 @@ def cfg():
 
 def test_simple_pb():
 
-    for missing in ['id', 'version', 'type']:
+    for missing in ["id", "version", "type"]:
         with pytest.raises(ValueError, match="Workflow must"):
             workflow = dict(WORKFLOW)
             del workflow[missing]
-            entity.ProcessingBlock('foo-bar', None, workflow)
+            entity.ProcessingBlock("foo-bar", None, workflow)
     with pytest.raises(ValueError, match="Processing block ID"):
-        entity.ProcessingBlock('asd_htb', None, WORKFLOW)
+        entity.ProcessingBlock("asd_htb", None, WORKFLOW)
     with pytest.raises(ValueError, match="Processing block ID"):
-        entity.ProcessingBlock('foo/bar', None, WORKFLOW)
+        entity.ProcessingBlock("foo/bar", None, WORKFLOW)
 
-    pblock = entity.ProcessingBlock('foo-bar', None, WORKFLOW)
+    pblock = entity.ProcessingBlock("foo-bar", None, WORKFLOW)
     # pylint: disable=W0123
-    assert pblock == eval('entity.' + repr(pblock))
+    assert pblock == eval("entity." + repr(pblock))
 
 
 def test_create_pblock(cfg):
@@ -48,7 +44,7 @@ def test_create_pblock(cfg):
     # Create 3 processing blocks
     for txn in cfg.txn():
 
-        pblock1_id = txn.new_processing_block_id('test')
+        pblock1_id = txn.new_processing_block_id("test")
         pblock1 = entity.ProcessingBlock(pblock1_id, None, WORKFLOW)
         assert txn.get_processing_block(pblock1_id) is None
         txn.create_processing_block(pblock1)
@@ -56,25 +52,22 @@ def test_create_pblock(cfg):
             txn.create_processing_block(pblock1)
         assert txn.get_processing_block(pblock1_id).id == pblock1_id
 
-        pblock2_id = txn.new_processing_block_id('test')
+        pblock2_id = txn.new_processing_block_id("test")
         pblock2 = entity.ProcessingBlock(pblock2_id, None, WORKFLOW)
         txn.create_processing_block(pblock2)
 
         pblock_ids = txn.list_processing_blocks()
-        assert(pblock_ids == [pblock1_id, pblock2_id])
+        assert pblock_ids == [pblock1_id, pblock2_id]
 
     # Make sure that it stuck
     for txn in cfg.txn():
         pblock_ids = txn.list_processing_blocks()
-        assert(pblock_ids == [pblock1_id, pblock2_id])
+        assert pblock_ids == [pblock1_id, pblock2_id]
 
     # Make sure we can update them
     for txn in cfg.txn():
-        pblock1.parameters['test'] = 'test'
-        pblock1.dependencies.append({
-            'pblockId': pblock2_id,
-            'type': []
-        })
+        pblock1.parameters["test"] = "test"
+        pblock1.dependencies.append({"pblockId": pblock2_id, "type": []})
         txn.update_processing_block(pblock1)
 
     # Check that update worked
@@ -88,12 +81,12 @@ def test_create_pblock(cfg):
 def test_take_pblock(cfg):
 
     workflow2 = dict(WORKFLOW)
-    workflow2['id'] += "-take"
+    workflow2["id"] += "-take"
 
     # Create another processing block
     for txn in cfg.txn():
 
-        pblock_id = txn.new_processing_block_id('test')
+        pblock_id = txn.new_processing_block_id("test")
         pblock = entity.ProcessingBlock(pblock_id, None, workflow2)
         txn.create_processing_block(pblock)
 
@@ -113,24 +106,16 @@ def test_take_pblock(cfg):
 
 def test_pblock_state(cfg):
 
-    pblock_id = 'teststate-00000000-0000'
+    pblock_id = "teststate-00000000-0000"
     state1 = {
         "resources_available": True,
         "state": "RUNNING",
-        "receive_addresses": {
-            "1": {
-                "1": ["0.0.0.0", 1024]
-            }
-        }
+        "receive_addresses": {"1": {"1": ["0.0.0.0", 1024]}},
     }
     state2 = {
         "resources_available": True,
         "state": "FINISHED",
-        "receive_addresses": {
-            "1": {
-                "1": ["0.0.0.0", 1024]
-            }
-        }
+        "receive_addresses": {"1": {"1": ["0.0.0.0", 1024]}},
     }
 
     # Create processing block
@@ -167,5 +152,5 @@ def test_pblock_state(cfg):
         assert state_out == state2
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main()

@@ -8,14 +8,21 @@ No attempt has been made to make it thread-safe, so it probably isn't.
 from typing import List, Callable
 
 from .common import (
-    _depth, _tag_depth,
-    _untag_depth, _check_path,
-    ConfigCollision, ConfigVanished
+    _depth,
+    _tag_depth,
+    _untag_depth,
+    _check_path,
+    ConfigCollision,
+    ConfigVanished,
 )
 
 
-def _op(path: str, value: str,
-        to_check: Callable[[str], None], to_do: Callable[[str, str], None]):
+def _op(
+    path: str,
+    value: str,
+    to_check: Callable[[str], None],
+    to_do: Callable[[str, str], None],
+):
     _check_path(path)
     tag = _tag_depth(path)
     to_check(tag)
@@ -32,7 +39,7 @@ class MemoryBackend:
         """Construct a memory backend."""
         return
 
-    def lease(self, *_args, **_kwargs) -> 'Lease': # pylint: disable=no-self-use
+    def lease(self, *_args, **_kwargs) -> "Lease":  # pylint: disable=no-self-use
         """
         Generate a dummy lease object.
 
@@ -42,15 +49,19 @@ class MemoryBackend:
         :param kwargs: arbitrary, not used
         :returns: dummy lease object
         """
-        class Lease: # pylint: disable=too-few-public-methods
+
+        class Lease:  # pylint: disable=too-few-public-methods
             """Dummy lease class."""
+
             def __enter__(self):
                 """Dummy enter method."""
+
             def __exit__(self, exc_type, exc_val, exc_tb):
                 """Dummy exit method."""
+
         return Lease()
 
-    def txn(self, *_args, **_kwargs) -> 'MemoryTransaction':
+    def txn(self, *_args, **_kwargs) -> "MemoryTransaction":
         """
         Create an in-memory "transaction".
 
@@ -89,8 +100,7 @@ class MemoryBackend:
 
     def _check_not_exists(self, path: str) -> None:
         if path in self._data.keys():
-            raise ConfigCollision(path,
-                                  "path {} already in dictionary".format(path))
+            raise ConfigCollision(path, "path {} already in dictionary".format(path))
 
     def create(self, path: str, value: str, *_args, **_kwargs) -> None:
         """
@@ -116,8 +126,13 @@ class MemoryBackend:
         """
         _op(path, value, self._check_exists, self._put)
 
-    def delete(self, path: str, must_exist: bool = True,
-               recursive: bool = False, max_depth: int = 16) -> None:
+    def delete(
+        self,
+        path: str,
+        must_exist: bool = True,
+        recursive: bool = False,
+        max_depth: int = 16,
+    ) -> None:
         """
         Delete an entry at the given path.
 
@@ -134,7 +149,7 @@ class MemoryBackend:
             self._check_exists(tag)
         if recursive:
             depth = _depth(path)
-            for lvl in range(depth, depth+max_depth):
+            for lvl in range(depth, depth + max_depth):
                 tag = _tag_depth(path, depth=lvl)
                 for key in self._data.copy().keys():
                     if key.startswith(tag):
@@ -153,15 +168,14 @@ class MemoryBackend:
         :returns: list of keys
         """
         # Match only at this depth level. Special case for top level.
-        if path == '/':
+        if path == "/":
             new_path = path
             depth = 1
         else:
-            new_path = path.rstrip('/')
+            new_path = path.rstrip("/")
             depth = _depth(new_path) + 1
         tag = _tag_depth(new_path, depth=depth)
-        return sorted([_untag_depth(k)
-                       for k in self._data if k.startswith(tag)])
+        return sorted([_untag_depth(k) for k in self._data if k.startswith(tag)])
 
     def close(self) -> None:
         """
@@ -243,8 +257,9 @@ class MemoryTransaction:
         """
         self.backend.update(path, value)
 
-    def delete(self, path: str, must_exist: bool = True,
-               recursive: bool = False, **_kwargs):
+    def delete(
+        self, path: str, must_exist: bool = True, recursive: bool = False, **_kwargs
+    ):
         """
         Delete an entry at the given path.
 
@@ -284,6 +299,7 @@ class MemoryWatcher:
     """
     Watcher wrapper around the backend implementation (Etcd3Watcher)
     """
+
     def __init__(self, txn_wrapper, backend: MemoryBackend, *args, **kwargs):
         """
         param: txn_wrapper: wrapper object, which wraps the txn object with

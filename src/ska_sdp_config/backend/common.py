@@ -12,7 +12,7 @@
 
 
 def _depth(path: str) -> int:
-    return path.count('/')
+    return path.count("/")
 
 
 def _tag_depth(path: str, depth=None) -> str:
@@ -23,7 +23,7 @@ def _tag_depth(path: str, depth=None) -> str:
     :param depth: to add, number of / by default
     :return: tag
     """
-    if not path or path[0] != '/':
+    if not path or path[0] != "/":
         raise ValueError("Path must start with /!")
     if depth is None:
         depth = _depth(path)
@@ -40,14 +40,14 @@ def _untag_depth(path: str) -> str:
     :return: path
     """
     # Cut from first '/'
-    slash_ix = path.index('/')
+    slash_ix = path.index("/")
     if slash_ix is None:
         return path
     return path[slash_ix:]
 
 
 def _check_path(path: str) -> None:
-    if path and path[-1] == '/':
+    if path and path[-1] == "/":
         raise ValueError("Path should not have a trailing '/'!")
 
 

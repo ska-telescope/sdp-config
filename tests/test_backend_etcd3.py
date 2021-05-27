@@ -6,17 +6,15 @@ import os
 import time
 import pytest
 
-from ska_sdp_config.backend import (
-    ConfigCollision, ConfigVanished, Etcd3Backend
-)
+from ska_sdp_config.backend import ConfigCollision, ConfigVanished, Etcd3Backend
 
 PREFIX = "/__test"
 
 
 @pytest.fixture(scope="session")
 def etcd3():
-    host = os.getenv('SDP_TEST_HOST', '127.0.0.1')
-    port = os.getenv('SDP_CONFIG_PORT', '2379')
+    host = os.getenv("SDP_TEST_HOST", "127.0.0.1")
+    port = os.getenv("SDP_CONFIG_PORT", "2379")
     with Etcd3Backend(host=host, port=port) as etcd3:
         etcd3.delete(PREFIX, must_exist=False, recursive=True)
         yield etcd3
@@ -51,26 +49,26 @@ def test_create(etcd3):
 
     # Check value
     v, ver = etcd3.get(key)
-    assert v == 'foo'
+    assert v == "foo"
 
     # Update, check again. Make sure version was incremented
-    etcd3.update(key, 'bar', must_be_rev=ver)
+    etcd3.update(key, "bar", must_be_rev=ver)
     v2, ver2 = etcd3.get(key)
-    assert v2 == 'bar'
+    assert v2 == "bar"
     assert ver2.revision > ver.revision
     assert ver2.mod_revision == ver.mod_revision + 1
 
     # Check that we cannot update the original key if we provide the
     # wrong revision
     with pytest.raises(ConfigVanished):
-        etcd3.update(key, 'baz', must_be_rev=ver)
+        etcd3.update(key, "baz", must_be_rev=ver)
     v2b, ver2b = etcd3.get(key)
-    assert v2b == 'bar'
+    assert v2b == "bar"
     assert ver2.mod_revision == ver2b.mod_revision
 
     # Check that we can obtain the previous version
     v3, ver3 = etcd3.get(key, ver)
-    assert v3 == 'foo'
+    assert v3 == "foo"
     assert ver3.mod_revision == ver.mod_revision
 
     # Delete key
@@ -84,56 +82,95 @@ def test_list(etcd3):
     key = PREFIX + "/test_list"
 
     # Create a bunch of keys
-    etcd3.create(key+"/a", "")
-    etcd3.create(key+"/ab", "")
-    etcd3.create(key+"/b", "")
-    etcd3.create(key+"/ax", "")
-    etcd3.create(key+"/ab/c", "")
-    etcd3.create(key+"/a/d", "")
-    etcd3.create(key+"/a/d/x", "")
+    etcd3.create(key + "/a", "")
+    etcd3.create(key + "/ab", "")
+    etcd3.create(key + "/b", "")
+    etcd3.create(key + "/ax", "")
+    etcd3.create(key + "/ab/c", "")
+    etcd3.create(key + "/a/d", "")
+    etcd3.create(key + "/a/d/x", "")
 
     # Try listing
-    assert etcd3.list_keys(key+'/')[0] == [
-        key+"/a", key+"/ab", key+"/ax", key+"/b"]
+    assert etcd3.list_keys(key + "/")[0] == [
+        key + "/a",
+        key + "/ab",
+        key + "/ax",
+        key + "/b",
+    ]
     assert etcd3.list_keys(key)[0] == []
-    assert etcd3.list_keys(key+"/a")[0] == [
-        key+"/a", key+"/ab", key+"/ax"]
-    assert etcd3.list_keys(key+"/b")[0] == [
-        key+"/b"]
-    assert etcd3.list_keys(key+"/a/")[0] == [
-        key+"/a/d"]
-    assert etcd3.list_keys(key+"/ab/")[0] == [
-        key+"/ab/c"]
-    assert etcd3.list_keys(key+"/ab")[0] == [
-        key+"/ab"]
+    assert etcd3.list_keys(key + "/a")[0] == [key + "/a", key + "/ab", key + "/ax"]
+    assert etcd3.list_keys(key + "/b")[0] == [key + "/b"]
+    assert etcd3.list_keys(key + "/a/")[0] == [key + "/a/d"]
+    assert etcd3.list_keys(key + "/ab/")[0] == [key + "/ab/c"]
+    assert etcd3.list_keys(key + "/ab")[0] == [key + "/ab"]
 
     # Try listing recursively
     assert etcd3.list_keys(key, recurse=1)[0] == [
-        key+"/a", key+"/ab", key+"/ax", key+"/b"]
+        key + "/a",
+        key + "/ab",
+        key + "/ax",
+        key + "/b",
+    ]
     assert etcd3.list_keys(key, recurse=(1,))[0] == [
-        key+"/a", key+"/ab", key+"/ax", key+"/b"]
+        key + "/a",
+        key + "/ab",
+        key + "/ax",
+        key + "/b",
+    ]
     assert etcd3.list_keys(key, recurse=2)[0] == [
-        key+"/a", key+"/a/d", key+"/ab", key+"/ab/c",
-        key+"/ax", key+"/b"]
-    assert etcd3.list_keys(key, recurse=(2,))[0] == [
-        key+"/a/d", key+"/ab/c"]
-    assert etcd3.list_keys(key+"/", recurse=1)[0] == [
-        key+"/a", key+"/a/d", key+"/ab", key+"/ab/c",
-        key+"/ax", key+"/b"]
+        key + "/a",
+        key + "/a/d",
+        key + "/ab",
+        key + "/ab/c",
+        key + "/ax",
+        key + "/b",
+    ]
+    assert etcd3.list_keys(key, recurse=(2,))[0] == [key + "/a/d", key + "/ab/c"]
+    assert etcd3.list_keys(key + "/", recurse=1)[0] == [
+        key + "/a",
+        key + "/a/d",
+        key + "/ab",
+        key + "/ab/c",
+        key + "/ax",
+        key + "/b",
+    ]
     assert etcd3.list_keys(key, recurse=3)[0] == [
-        key+"/a", key+"/a/d", key+"/a/d/x",
-        key+"/ab", key+"/ab/c", key+"/ax", key+"/b"]
+        key + "/a",
+        key + "/a/d",
+        key + "/a/d/x",
+        key + "/ab",
+        key + "/ab/c",
+        key + "/ax",
+        key + "/b",
+    ]
     assert etcd3.list_keys(key, recurse=[3, 2, 1])[0] == [
-        key+"/a", key+"/a/d", key+"/a/d/x",
-        key+"/ab", key+"/ab/c", key+"/ax", key+"/b"]
-    assert etcd3.list_keys(key+"/a", recurse=2)[0] == [
-        key+"/a", key+"/a/d", key+"/a/d/x",
-        key+"/ab", key+"/ab/c", key+"/ax"]
-    assert etcd3.list_keys(key+"/a/", recurse=1)[0] == [
-        key+"/a/d", key+"/a/d/x"]
-    assert set(etcd3.list_keys("/", recurse=32)[0]) >= set([
-        key+"/a", key+"/a/d", key+"/a/d/x",
-        key+"/ab", key+"/ab/c", key+"/ax"])
+        key + "/a",
+        key + "/a/d",
+        key + "/a/d/x",
+        key + "/ab",
+        key + "/ab/c",
+        key + "/ax",
+        key + "/b",
+    ]
+    assert etcd3.list_keys(key + "/a", recurse=2)[0] == [
+        key + "/a",
+        key + "/a/d",
+        key + "/a/d/x",
+        key + "/ab",
+        key + "/ab/c",
+        key + "/ax",
+    ]
+    assert etcd3.list_keys(key + "/a/", recurse=1)[0] == [key + "/a/d", key + "/a/d/x"]
+    assert set(etcd3.list_keys("/", recurse=32)[0]) >= set(
+        [
+            key + "/a",
+            key + "/a/d",
+            key + "/a/d/x",
+            key + "/ab",
+            key + "/ab/c",
+            key + "/ax",
+        ]
+    )
 
     # Remove
     etcd3.delete(key, must_exist=False, recursive=True)
@@ -159,7 +196,7 @@ def test_delete(etcd3):
     for del_PREFIX in [False, True]:
 
         # Create deeply recursive structure
-        childs = ["/".join([key] + n * ['x']) for n in range(10)]
+        childs = ["/".join([key] + n * ["x"]) for n in range(10)]
         for n, child in enumerate(childs):
             etcd3.create(child, n)
 
@@ -178,8 +215,7 @@ def test_delete(etcd3):
 
         # This should fail now
         with pytest.raises(ConfigVanished):
-            etcd3.delete(key, recursive=True, must_exist=True,
-                         prefix=del_PREFIX)
+            etcd3.delete(key, recursive=True, must_exist=True, prefix=del_PREFIX)
         for n, child in enumerate(childs):
             if n > 0:
                 assert etcd3.get(child)[0] == str(n), child
@@ -189,8 +225,7 @@ def test_delete(etcd3):
         # But this one should work, and remove remaining keys
         # (except those with the same PREFIX but different path
         #  unless we set the option before)
-        etcd3.delete(key, recursive=True, must_exist=False,
-                     prefix=del_PREFIX)
+        etcd3.delete(key, recursive=True, must_exist=False, prefix=del_PREFIX)
         for child in childs:
             assert etcd3.get(child)[0] is None, child
         assert (etcd3.get(key + "x")[0] is None) == del_PREFIX
@@ -216,40 +251,40 @@ def test_watch(etcd3):
         etcd3.update(key, "bla4")
         etcd3.delete(key)
 
-        assert watch.get()[1] == 'bla'
-        assert watch.get()[1] == 'bla2'
-        assert watch.get()[1] == 'bla3'
-        assert watch.get()[1] == 'bla4'
+        assert watch.get()[1] == "bla"
+        assert watch.get()[1] == "bla2"
+        assert watch.get()[1] == "bla3"
+        assert watch.get()[1] == "bla4"
         assert watch.get()[1] is None
 
     # Check that we can watch all children
-    with etcd3.watch(key+"/", prefix=True) as watch:
+    with etcd3.watch(key + "/", prefix=True) as watch:
         time.sleep(0.1)
 
-        etcd3.create(key+"/ab", "bla")
-        etcd3.create(key+"/ac", "bla2")
-        etcd3.create(key+"/ba", "bla3")
-        etcd3.create(key+"/ad", "bla4")
+        etcd3.create(key + "/ab", "bla")
+        etcd3.create(key + "/ac", "bla2")
+        etcd3.create(key + "/ba", "bla3")
+        etcd3.create(key + "/ad", "bla4")
 
-        assert watch.get()[0:2] == (key+"/ab", 'bla')
-        assert watch.get()[0:2] == (key+"/ac", 'bla2')
-        assert watch.get()[0:2] == (key+"/ba", 'bla3')
-        assert watch.get()[0:2] == (key+"/ad", 'bla4')
+        assert watch.get()[0:2] == (key + "/ab", "bla")
+        assert watch.get()[0:2] == (key + "/ac", "bla2")
+        assert watch.get()[0:2] == (key + "/ba", "bla3")
+        assert watch.get()[0:2] == (key + "/ad", "bla4")
 
     etcd3.delete(key, must_exist=False, recursive=True)
 
     # Check that we can also watch multiple keys with the same PREFIX
-    with etcd3.watch(key+"/a", prefix=True) as watch:
+    with etcd3.watch(key + "/a", prefix=True) as watch:
         time.sleep(0.1)
 
-        etcd3.create(key+"/ab", "bla")
-        etcd3.create(key+"/ac", "bla2")
-        etcd3.create(key+"/ba", "bla3")
-        etcd3.create(key+"/ad", "bla4")
+        etcd3.create(key + "/ab", "bla")
+        etcd3.create(key + "/ac", "bla2")
+        etcd3.create(key + "/ba", "bla3")
+        etcd3.create(key + "/ad", "bla4")
 
-        assert watch.get()[0:2] == (key+"/ab", 'bla')
-        assert watch.get()[0:2] == (key+"/ac", 'bla2')
-        assert watch.get()[0:2] == (key+"/ad", 'bla4')
+        assert watch.get()[0:2] == (key + "/ab", "bla")
+        assert watch.get()[0:2] == (key + "/ac", "bla2")
+        assert watch.get()[0:2] == (key + "/ad", "bla4")
 
     etcd3.delete(key, recursive=True, must_exist=False)
 
@@ -353,10 +388,10 @@ def test_transaction_conc(etcd3):
     key3 = key + "/3"
     key4 = key + "/4"
 
-    counter = {'i': 0}
+    counter = {"i": 0}
 
     def increase_counter():
-        counter['i'] += 1
+        counter["i"] += 1
 
     # Ensure reading is consistent
     etcd3.create(key, "1")
@@ -370,7 +405,7 @@ def test_transaction_conc(etcd3):
         assert txn.get(key2)[0] == "1"
     # As this transaction is not writing anything, it will not get repeated
     assert i == 0
-    assert counter['i'] == 0  # No commit happens
+    assert counter["i"] == 0  # No commit happens
 
     # Now check the behaviour if we write something. This time we
     # might be writing an inconsistent value to the database, so the
@@ -384,8 +419,8 @@ def test_transaction_conc(etcd3):
     assert i == 10
     assert etcd3.get(key2)[0] == "9"
     assert etcd3.get(key3)[0] == "10"
-    assert counter['i'] == 1
-    counter['i'] = 0
+    assert counter["i"] == 1
+    counter["i"] = 0
 
     # Same experiment, but with a key that didn't exist yet
     for i, txn in enumerate(etcd3.txn()):
@@ -395,9 +430,9 @@ def test_transaction_conc(etcd3):
             etcd3.create(key4, "1")
         txn.update(key3, int(i))
     assert i == 1
-    assert counter['i'] == 1
+    assert counter["i"] == 1
     etcd3.delete(key4)
-    counter['i'] = 0
+    counter["i"] = 0
 
     # This is especially important because it underpins the safety
     # check of create():
@@ -412,7 +447,7 @@ def test_transaction_conc(etcd3):
             with pytest.raises(ConfigCollision):
                 txn.create(key4, "2")
     assert i == 1
-    assert counter['i'] == 0  # No commit
+    assert counter["i"] == 0  # No commit
 
     etcd3.delete(key, recursive=True)
 
@@ -420,55 +455,55 @@ def test_transaction_conc(etcd3):
 def test_transaction_list(etcd3):
 
     key = PREFIX + "/test_txn_list"
-    keys = [key+"/"+str(i) for i in range(5)]
-    keys_sub = [key+"/sub" for key in keys]
+    keys = [key + "/" + str(i) for i in range(5)]
+    keys_sub = [key + "/sub" for key in keys]
     for txn in etcd3.txn():
         for k in keys:
             txn.create(k, k)
-            txn.create(k+"/sub", k+"/sub")
+            txn.create(k + "/sub", k + "/sub")
 
     # Ensure that we can list the keys
-    assert etcd3.list_keys(key+'/')[0] == keys
+    assert etcd3.list_keys(key + "/")[0] == keys
     for txn in etcd3.txn():
-        assert txn.list_keys(key+'/') == keys
-        assert txn.list_keys(key+'/', recurse=1) == sorted(keys + keys_sub)
-        assert txn.list_keys(key+'/', recurse=(1,)) == keys_sub
+        assert txn.list_keys(key + "/") == keys
+        assert txn.list_keys(key + "/", recurse=1) == sorted(keys + keys_sub)
+        assert txn.list_keys(key + "/", recurse=(1,)) == keys_sub
     for txn in etcd3.txn():
-        assert txn.list_keys(key+'/', recurse=(1,)) == keys_sub
+        assert txn.list_keys(key + "/", recurse=(1,)) == keys_sub
 
     # Ensure that we can add another key into the range and have it
     # appear to the transaction *before* we commit
-    keys.append(key+"/xxx")
-    assert etcd3.list_keys(key+'/')[0] == keys[:-1]
+    keys.append(key + "/xxx")
+    assert etcd3.list_keys(key + "/")[0] == keys[:-1]
     for txn in etcd3.txn():
-        assert txn.list_keys(key+'/') == keys[:-1]
-        txn.create(key+"/xxx", "xxx")
-        assert txn.list_keys(key+'/', recurse=3) == sorted(keys + keys_sub)
-        assert txn.list_keys(key+'/') == keys
-        assert etcd3.list_keys(key+'/')[0] == keys[:-1]
-    assert etcd3.list_keys(key+'/')[0] == keys
+        assert txn.list_keys(key + "/") == keys[:-1]
+        txn.create(key + "/xxx", "xxx")
+        assert txn.list_keys(key + "/", recurse=3) == sorted(keys + keys_sub)
+        assert txn.list_keys(key + "/") == keys
+        assert etcd3.list_keys(key + "/")[0] == keys[:-1]
+    assert etcd3.list_keys(key + "/")[0] == keys
 
     # Test iteratively building up
     etcd3.delete(key, recursive=True, must_exist=False)
     for i, k in enumerate(keys):
         for txn in etcd3.txn():
-            assert txn.list_keys(key+'/') == keys[:i]
+            assert txn.list_keys(key + "/") == keys[:i]
             txn.create(k, k)
 
     # Removing keys causes a re-run, but a value update does not.
     for i, txn in enumerate(etcd3.txn()):
-        txn.list_keys(key+'/')
+        txn.list_keys(key + "/")
         etcd3.delete(keys[5], must_exist=False)
-        txn.update(keys[4], keys[3-i])  # stand-in side effect
+        txn.update(keys[4], keys[3 - i])  # stand-in side effect
     assert i == 1
     assert etcd3.get(keys[5])[0] is None
 
     # Adding a new key into the range should also invalidate the transaction
     for i, txn in enumerate(etcd3.txn()):
-        txn.list_keys(key+'/')
+        txn.list_keys(key + "/")
         if i == 0:
             etcd3.create(keys[5], keys[5])
-        txn.update(keys[4], keys[3-i])  # stand-in side effect
+        txn.update(keys[4], keys[3 - i])  # stand-in side effect
     assert i == 1
     etcd3.delete(key, recursive=True, must_exist=False)
 
@@ -490,7 +525,7 @@ def test_transaction_wait(etcd3):
         if i == 0:
             for j in range(1, 5):
                 etcd3.update(key, str(j))
-    assert values_seen == ['0'] + 4 * ['4']
+    assert values_seen == ["0"] + 4 * ["4"]
 
     # Now test with watch flag set. This would block unless we make
     # the appropriate number of updates. Note that in contrast to the
@@ -501,9 +536,9 @@ def test_transaction_wait(etcd3):
         values_seen.append(txn.get(key))
         if i < 4:
             txn.loop(watch=True)
-            etcd3.update(key, str(i+1))
+            etcd3.update(key, str(i + 1))
     assert i == 4
-    assert values_seen == ['4', '1', '2', '3', '4']
+    assert values_seen == ["4", "1", "2", "3", "4"]
     assert not txn._watchers
 
     # Make sure we can successfully cancel underlying watchers using "break"
@@ -518,7 +553,7 @@ def test_transaction_wait(etcd3):
             break
     assert not txn._watchers
     assert i == 1
-    assert values_seen == ['4', 'x']
+    assert values_seen == ["4", "x"]
 
 
 @pytest.mark.timeout(2)
@@ -531,26 +566,27 @@ def test_transaction_watchers(etcd3):
     # pylint: disable=W0212
     def watcher_count(typ, txn):
         return len([() for wk in txn._watchers if wk[0] == typ])
+
     for i, txn in enumerate(etcd3.txn()):
         txn.get(key)
         if i == 0:
             # No watch request yet
             assert watcher_count("get", txn) == 0
             assert watcher_count("list", txn) == 0
-            txn.list_keys(key+"/")
-            txn.get(key+"/1")
-            txn.get(key+"/2")
+            txn.list_keys(key + "/")
+            txn.get(key + "/1")
+            txn.get(key + "/2")
         if i == 1:
             # Get watcher for "key", list watcher for "key/*"
             assert watcher_count("get", txn) == 1
             assert watcher_count("list", txn) == 1
-            txn.get(key+"/1")
-            txn.get(key+"/2")
+            txn.get(key + "/1")
+            txn.get(key + "/2")
         if i == 2:
             # Get watchers for "key", "key/1" and "key/2"
             assert watcher_count("get", txn) == 3
             assert watcher_count("list", txn) == 0
-            txn.get(key+"/1")
+            txn.get(key + "/1")
         if i == 3:
             # Get watchers for "key" and "key/1"
             assert len(txn._watchers) == 2
@@ -575,6 +611,7 @@ def test_transaction_watchers_new(etcd3):
     # pylint: disable=W0212
     def watcher_count(typ, watch):
         return len([() for wk in watch._wait_txn._watchers if wk[0] == typ])
+
     for i, watch in enumerate(etcd3.watcher()):
         for txn in watch.txn():
             txn.get(key)
@@ -583,22 +620,22 @@ def test_transaction_watchers_new(etcd3):
             assert watcher_count("get", watch) == 0
             assert watcher_count("list", watch) == 0
             for txn in watch.txn():
-                txn.list_keys(key+"/")
-                txn.get(key+"/1")
-                txn.get(key+"/2")
+                txn.list_keys(key + "/")
+                txn.get(key + "/1")
+                txn.get(key + "/2")
         if i == 1:
             # Get watcher for "key", list watcher for "key/*"
             assert watcher_count("get", watch) == 1
             assert watcher_count("list", watch) == 1
             for txn in watch.txn():
-                txn.get(key+"/1")
-                txn.get(key+"/2")
+                txn.get(key + "/1")
+                txn.get(key + "/2")
         if i == 2:
             # Get watchers for "key", "key/1" and "key/2"
             assert watcher_count("get", watch) == 3
             assert watcher_count("list", watch) == 0
             for txn in watch.txn():
-                txn.get(key+"/1")
+                txn.get(key + "/1")
         if i == 3:
             # Get watchers for "key" and "key/1"
             assert len(watch._wait_txn._watchers) == 2
@@ -621,7 +658,7 @@ def test_transaction_watch_list(etcd3):
     etcd3.create(key + "/c", "test3")
 
     for i, txn in enumerate(etcd3.txn()):
-        keys = txn.list_keys(key+"/")
+        keys = txn.list_keys(key + "/")
         if i == 0:
             assert not txn._got_timeout
             assert keys == [key + "/a", key + "/b", key + "/c"]
@@ -676,7 +713,7 @@ def test_transaction_watch_list_new(etcd3):
     # inexact science.
     for i, watch in enumerate(etcd3.watcher(timeout=0.25)):
         for txn in watch.txn():
-            keys = txn.list_keys(key+"/")
+            keys = txn.list_keys(key + "/")
         if i == 0:
             assert not watch._wait_txn._got_timeout
             assert keys == [key + "/a", key + "/b", key + "/c"]
@@ -758,5 +795,5 @@ def test_transaction_retries(etcd3):
         break
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main()
