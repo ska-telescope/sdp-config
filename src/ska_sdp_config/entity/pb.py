@@ -21,9 +21,9 @@ class ProcessingBlock:
     # pylint: disable=dangerous-default-value
     # pylint: disable=redefined-builtin
 
-    def __init__(self, id, sbi_id, workflow,
-                 parameters={}, dependencies=[],
-                 **kwargs): # pylint: disable=too-many-arguments
+    def __init__(
+        self, id, sbi_id, workflow, parameters={}, dependencies=[], **kwargs
+    ):  # pylint: disable=too-many-arguments
         """
         Create a new processing block structure.
 
@@ -38,55 +38,54 @@ class ProcessingBlock:
         """
         # Get parameter dictionary
         self._dict = {
-            'id': str(id),
-            'sbi_id': None if sbi_id is None else str(sbi_id),
-            'workflow': dict(copy.deepcopy(workflow)),
-            'parameters': dict(copy.deepcopy(parameters)),
-            'dependencies': list(copy.deepcopy(dependencies))
+            "id": str(id),
+            "sbi_id": None if sbi_id is None else str(sbi_id),
+            "workflow": dict(copy.deepcopy(workflow)),
+            "parameters": dict(copy.deepcopy(parameters)),
+            "dependencies": list(copy.deepcopy(dependencies)),
         }
         self._dict.update(kwargs)
 
         # Validate
-        if not set(self.workflow) >= {'type', 'id', 'version'}:
+        if not set(self.workflow) >= {"type", "id", "version"}:
             raise ValueError("Workflow must specify type, ID and version!")
         if not _PB_ID_RE.match(self.id):
-            raise ValueError("Processing block ID {} not permissible!".format(
-                self.id))
+            raise ValueError("Processing block ID {} not permissible!".format(self.id))
 
     def to_dict(self):
         """Return data as dictionary."""
         return self._dict
 
     @property
-    def id(self): # pylint: disable=invalid-name
+    def id(self):  # pylint: disable=invalid-name
         """Return the processing block ID."""
-        return self._dict['id']
+        return self._dict["id"]
 
     @property
     def sbi_id(self):
         """Return scheduling block instance ID, if associated with one."""
-        return self._dict.get('sbi_id')
+        return self._dict.get("sbi_id")
 
     @property
     def workflow(self):
         """Return information identifying the workflow."""
-        return self._dict['workflow']
+        return self._dict["workflow"]
 
     @property
     def parameters(self):
         """Return workflow-specific parameters."""
-        return self._dict['parameters']
+        return self._dict["parameters"]
 
     @property
     def dependencies(self):
         """Return dependencies on other processing blocks."""
-        return self._dict['dependencies']
+        return self._dict["dependencies"]
 
     def __repr__(self):
         """Build string representation."""
         return "ProcessingBlock({})".format(
-            ", ".join(["{}={}".format(k, repr(v))
-                       for k, v in self._dict.items()]))
+            ", ".join(["{}={}".format(k, repr(v)) for k, v in self._dict.items()])
+        )
 
     def __eq__(self, other):
         """Equality check."""

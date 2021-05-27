@@ -13,7 +13,7 @@ PREFIX = "/__test_sb"
 # pylint: disable=W0212
 @pytest.fixture(scope="session")
 def cfg():
-    host = os.getenv('SDP_TEST_HOST', '127.0.0.1')
+    host = os.getenv("SDP_TEST_HOST", "127.0.0.1")
     with ska_sdp_config.Config(global_prefix=PREFIX, host=host) as cfg:
         cfg._backend.delete(PREFIX, must_exist=False, recursive=True)
         yield cfg
@@ -21,8 +21,8 @@ def cfg():
 
 
 def test_sb_list(cfg):
-    sb1_id = 'foo'
-    sb2_id = 'bar'
+    sb1_id = "foo"
+    sb2_id = "bar"
 
     # Check scheduling block list is empty
     for txn in cfg.txn():
@@ -50,18 +50,18 @@ def test_sb_list(cfg):
 
 def test_sb_create_update(cfg):
 
-    sb_id = '20200213-0001'
+    sb_id = "20200213-0001"
     state1 = {
-        'scan_id': None,
-        'pb_realtime': [],
-        'pb_batch': [],
-        'pb_receive_addresses': None
+        "scan_id": None,
+        "pb_realtime": [],
+        "pb_batch": [],
+        "pb_receive_addresses": None,
     }
     state2 = {
-        'scan_id': 1,
-        'pb_realtime': ['realtime-20200213-0001', 'realtime-20200213-0002'],
-        'pb_batch': ['batch-20200213-0001', 'batch-20200213-0002'],
-        'pb_receive_addresses': 'realtime-20200213-0001'
+        "scan_id": 1,
+        "pb_realtime": ["realtime-20200213-0001", "realtime-20200213-0002"],
+        "pb_batch": ["batch-20200213-0001", "batch-20200213-0002"],
+        "pb_receive_addresses": "realtime-20200213-0001",
     }
 
     # Scheduling block has not been created, so should return None
@@ -93,5 +93,5 @@ def test_sb_create_update(cfg):
         assert state == state2
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main()

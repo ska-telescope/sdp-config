@@ -12,5 +12,11 @@ from .backend import ConfigCollision, ConfigVanished
 from .config import Config
 from .entity import ProcessingBlock, Deployment
 
-__all__ = ['__version__', 'Config', 'ConfigCollision', 'ConfigVanished',
-           'ProcessingBlock', 'Deployment']
+__all__ = [
+    "__version__",
+    "Config",
+    "ConfigCollision",
+    "ConfigVanished",
+    "ProcessingBlock",
+    "Deployment",
+]

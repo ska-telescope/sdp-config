@@ -13,7 +13,7 @@ PREFIX = "/__test_master"
 # pylint: disable=W0212
 @pytest.fixture(scope="session")
 def cfg():
-    host = os.getenv('SDP_TEST_HOST', '127.0.0.1')
+    host = os.getenv("SDP_TEST_HOST", "127.0.0.1")
     with ska_sdp_config.Config(global_prefix=PREFIX, host=host) as cfg:
         cfg.backend.delete(PREFIX, must_exist=False, recursive=True)
         yield cfg
@@ -22,13 +22,9 @@ def cfg():
 
 def test_master_create_update(cfg):
 
-    state1 = {
-        'state': 'OFF'
-    }
+    state1 = {"state": "OFF"}
 
-    state2 = {
-        'state': 'ON'
-    }
+    state2 = {"state": "ON"}
 
     # Master has not been created, so should return None
     for txn in cfg.txn():
