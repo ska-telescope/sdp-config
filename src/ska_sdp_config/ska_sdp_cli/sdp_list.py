@@ -95,7 +95,7 @@ def main(argv, config):
         "pb": args["pb"],
         "workflow": args["workflow"],
         "deploy": args["deployment"],
-        "sbi": args["sbi"],
+        "sb": args["sbi"],
     }
 
     if args["--prefix"]:

@@ -95,7 +95,7 @@ def main(argv, config):
     """Run ska-sdp create."""
     args = docopt(__doc__, argv=argv)
 
-    object_dict = {"workflow": args["workflow"], "sbi": args["sbi"]}
+    object_dict = {"workflow": args["workflow"], "sb": args["sbi"]}
 
     if args["pb"]:
         workflow = args["<workflow>"].split(":")
