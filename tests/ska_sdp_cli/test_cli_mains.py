@@ -114,7 +114,7 @@ def test_ska_sdp_main(
         ("pb 20200101", "/pb"),
         ("--quiet workflow", "/workflow"),
         ("workflow realtime", "/workflow"),
-        ("-q sbi", "/sbi"),
+        ("-q sbi", "/sb"),
         ("deployment", "/deploy"),
         ("--prefix=/test pb", "/test/pb"),  # with prefix
         ("--prefix=/test/ pb", "/test/pb"),  # with prefix ending on /
@@ -169,7 +169,7 @@ def test_sdp_get_main(mock_get_cmd, options, expected_args, times_called):
     "options, cmd_to_call, expected_value",
     [
         ("workflow my-key my-workflow", 0, "/workflow/my-key"),  # expected path
-        ("sbi my-key my-sbi", 0, "/sbi/my-key"),  # expected path
+        ("sbi my-key my-sbi", 0, "/sb/my-key"),  # expected path
         (
             "pb batch:test:0.0.0",
             2,
@@ -224,6 +224,7 @@ def test_sdp_create_main(
         ),
         ("update", "pb-state pb-20201010-test new-data", "/pb/pb-20201010-test/state"),
         ("edit", "deployment new-deployment", "/deploy/new-deployment"),
+        ("update", "sbi sbi-20201010-test new-data", "/sb/sbi-20201010-test"),
         ("edit", "pb-state pb-20201010-test", "/pb/pb-20201010-test/state"),
     ],
 )
@@ -262,6 +263,7 @@ def test_sdp_update_main(
         ("--all --prefix=/test pb", "/test/pb", ["prefix", "/test"]),
         ("--all --prefix=/test prefix", "/test", ["prefix", "/test"]),
         ("deployment depID", "/deploy/depID", False),
+        ("sbi sbi-test-20210524-00000", "/sb/sbi-test-20210524-00000", False),
         ("workflow batch:test:0.0.0", "/workflow/batch:test:0.0.0", False),
         ("--prefix=/test/ deployment depID", "/test/deploy/depID", False),
     ],

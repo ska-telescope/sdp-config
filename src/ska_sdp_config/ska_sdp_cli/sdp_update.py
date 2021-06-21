@@ -119,7 +119,7 @@ def main(argv, config):
     args = docopt(__doc__, argv=argv)
     object_dict = {
         "workflow": args["workflow"],
-        "sbi": args["sbi"],
+        "sb": args["sbi"],
         "deploy": args["deployment"],
     }
     key = args["<key>"]
