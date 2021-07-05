@@ -51,6 +51,12 @@ class EditorNotFoundError(Exception):
     """Raise when the EDITOR env.var is not set."""
 
 
+def _clean_filename(name: str):
+    # Make file name portable. Use translate if it starts getting complicated.
+    delim = "_"
+    return name.replace(":", delim).replace(".", delim)
+
+
 def cmd_update(txn, key, value):
     """
     Update raw key value.
@@ -69,34 +75,32 @@ def cmd_edit(txn, key):
 
     :param txn: Config object transaction
     :param key: Key in the Config DB to update the value of
-    :param config: Config object
     """
     val = txn.raw.get(key)
-    try:
+    if val is None:
+        raise KeyError(f"No match for {key}")
 
+    try:
         # Attempt translation to YAML
         val_dict = json.loads(val)
         val_in = yaml.dump(val_dict)
         have_yaml = True
 
     except json.JSONDecodeError:
-
         val_in = val
         have_yaml = False
 
-    # Write to temporary file
-    with tempfile.NamedTemporaryFile(
-        "w",
-        suffix=(".yml" if have_yaml else ".dat"),
-        prefix=os.path.basename(key),
-        delete=True,
-    ) as tmp:
-        print(val_in, file=tmp, flush=True)
-        fname = tmp.name
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Write to temporary file. Put it in a temp directory to avoid re-opening a
+        # file that hasn't been closed (can't do that on Windows).
+        suffix = ".yml" if have_yaml else ".dat"
+        fname = os.path.join(temp_dir, _clean_filename(os.path.basename(key) + suffix))
+        with open(fname, "w") as file:
+            file.write(val_in)
 
         # Start editor
         try:
-            subprocess.call([os.environ["EDITOR"] + " " + fname], shell=True)
+            subprocess.run((os.environ["EDITOR"], fname))
         except KeyError as err:
             # if EDITOR env var is not set, a KeyError is raised
             raise EditorNotFoundError from err
@@ -106,6 +110,7 @@ def cmd_edit(txn, key):
             new_val = tmp2.read()
         if have_yaml:
             new_val = dict_to_json(yaml.safe_load(new_val))
+        os.remove(fname)
 
     # Apply update
     if new_val == val:

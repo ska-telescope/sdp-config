@@ -30,7 +30,11 @@ setuptools.setup(
     tests_require=requirements_from("requirements-test.txt"),
     package_dir={"": "src"},
     packages=setuptools.find_packages("src"),
-    scripts=["scripts/ska-sdp"],
+    entry_points={
+        "console_scripts": [
+            "ska-sdp = ska_sdp_config.ska_sdp_cli.ska_sdp:main",
+        ]
+    },
     classifiers=[
         "Topic :: Database :: Front-Ends",
         "Topic :: Scientific/Engineering :: Astronomy",
