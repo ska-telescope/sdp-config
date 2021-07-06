@@ -5,9 +5,9 @@ CLI to interact with SDP
 
 Command Line Interface: ``ska-sdp``
 
-To run the CLI, you must start a shell in the ``console pod``.
+To run the CLI, you must start a shell in the console pod
 (assuming you have SDP deployed in Kubernetes/Minikube, for instructions follow:
-`SDP standalone <https://developer.skatelescope.org/projects/ska-sdp-integration/en/latest/running/standalone.html>`_)
+`SDP standalone <https://developer.skao.int/projects/ska-sdp-integration/en/latest/running/standalone.html>`_).
 
 .. code-block:: bash
 
@@ -331,11 +331,11 @@ Structured::
         "date-time": "2021-05-14T16:00:00Z"
       },
       "repositories": [
-        {"name": "nexus", "path": "nexus.engageska-portugal.pt/sdp-prototype"}
+        {"name": "ska", "path": "artefact.skao.int"}
       ],
       "workflows": [
-        {"type": "batch", "id":  "test_batch", "repository": "nexus", "image": "workflow-test-batch", "versions": ["0.2.2"]},
-        {"type": "realtime", "id":  "test_realtime", "repository": "nexus", "image": "workflow-test-realtime2", "versions": ["0.2.2"]}
+        {"type": "batch", "id":  "test_batch", "repository": "ska", "image": "workflow-test-batch", "versions": ["0.2.2"]},
+        {"type": "realtime", "id":  "test_realtime", "repository": "ska", "image": "workflow-test-realtime2", "versions": ["0.2.2"]}
       ]
     }
 
@@ -345,10 +345,10 @@ Flat::
     - type: realtime
       id: test_realtime
       version: 0.2.2
-      image: nexus.engageska-portugal.pt/sdp-prototype/workflow-test-realtime:0.2.2
+      image: artefact.skao.int/workflow-test-realtime:0.2.2
     - type: batch
       id: test_batch
       version: 0.2.2
-      image: nexus.engageska-portugal.pt/sdp-prototype/workflow-test-batch:0.2.2
+      image: artefact.skao.int/workflow-test-batch:0.2.2
 
 Both YAML and JSON files are accepted.

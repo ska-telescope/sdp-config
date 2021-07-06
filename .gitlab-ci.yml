@@ -155,7 +155,7 @@ publish-release:
 # CI metrics
 # ============================================================================
 # Create Gitlab CI badges from CI metrics
-# https://developer.skatelescope.org/en/latest/tools/continuousintegration.html#automated-collection-of-ci-health-metrics-as-part-of-the-ci-pipeline
+# https://developer.skao.int/en/latest/tools/continuousintegration.html#automated-collection-of-ci-health-metrics-as-part-of-the-ci-pipeline
 include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/post_step.yml'

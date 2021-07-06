@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# developer.skatelescope.org documentation build configuration file, created by
+# developer.skao.int documentation build configuration file, created by
 # sphinx-quickstart on Wed Dec 13 11:59:38 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -39,7 +39,7 @@ def setup(app):  # pylint: disable=missing-function-docstring
 
 
 # -- Project information -----------------------------------------------------
-project = "developer.skatelescope.org"
+project = "developer.skao.int"
 copyright = "2019-2020, SKA SDP Developers"
 author = "SKA SDP Developers"
 
@@ -185,7 +185,7 @@ latex_documents = [
     (
         master_doc,
         "developerskatelescopeorg.tex",
-        "developer.skatelescope.org Documentation",
+        "developer.skao.int Documentation",
         "Marco Bartolini",
         "manual",
     )
@@ -200,7 +200,7 @@ man_pages = [
     (
         master_doc,
         "developerskatelescopeorg",
-        "developer.skatelescope.org Documentation",
+        "developer.skao.int Documentation",
         [author],
         1,
     )
@@ -216,7 +216,7 @@ texinfo_documents = [
     (
         master_doc,
         "developerskatelescopeorg",
-        "developer.skatelescope.org Documentation",
+        "developer.skao.int Documentation",
         author,
         "developerskatelescopeorg",
         "One line description of project.",
