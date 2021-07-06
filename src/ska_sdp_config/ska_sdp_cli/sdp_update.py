@@ -5,13 +5,18 @@ Can either update from CLI, or edit via a text editor.
 Usage:
     ska-sdp update [options] (workflow|sbi|deployment) <key> <value>
     ska-sdp update [options] pb-state <pb-id> <value>
+    ska-sdp update [options] master <value>
+    ska-sdp update [options] subarray <array-id> <value>
     ska-sdp edit (workflow|sbi|deployment) <key>
     ska-sdp edit pb-state <pb-id>
+    ska-sdp edit master
+    ska-sdp edit subarray <array-id>
     ska-sdp (update|edit) (-h|--help)
 
 Arguments:
     <key>       Key within the Config DB. Cannot be a processing block related key.
     <pb-id>     Processing block id whose state is to be changed.
+    <array-id>  Subarray id (number)
     <value>     Value to update the key/pb state with.
 
 Options:
@@ -54,7 +59,7 @@ class EditorNotFoundError(Exception):
 def _clean_filename(name: str):
     # Make file name portable. Use translate if it starts getting complicated.
     delim = "_"
-    return name.replace(":", delim).replace(".", delim)
+    return name.replace("/", delim).replace(":", delim).replace(".", delim)
 
 
 def cmd_update(txn, key, value):
@@ -94,8 +99,10 @@ def cmd_edit(txn, key):
         # Write to temporary file. Put it in a temp directory to avoid re-opening a
         # file that hasn't been closed (can't do that on Windows).
         suffix = ".yml" if have_yaml else ".dat"
-        fname = os.path.join(temp_dir, _clean_filename(os.path.basename(key) + suffix))
+        fname = os.path.join(temp_dir, _clean_filename(key[1:]) + suffix)
         with open(fname, "w") as file:
+            if have_yaml:
+                file.write(f"# Editing key {key}\n")
             file.write(val_in)
 
         # Start editor
@@ -116,7 +123,7 @@ def cmd_edit(txn, key):
     if new_val == val:
         LOG.info("No change!")
     else:
-        txn.raw.update(key, new_val)
+        cmd_update(txn, key, new_val)
 
 
 def main(argv, config):
@@ -127,10 +134,15 @@ def main(argv, config):
         "sb": args["sbi"],
         "deploy": args["deployment"],
     }
-    key = args["<key>"]
 
     if args["pb-state"]:
         key = f"/pb/{args['<pb-id>']}/state"
+    elif args["master"]:
+        key = "/master"
+    elif args["subarray"]:
+        key = f"/subarray/{args['<array-id>'].zfill(2)}"
+    else:
+        key = args["<key>"]
 
     for sdp_object, exists in object_dict.items():
         if exists:
