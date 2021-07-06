@@ -11,6 +11,8 @@ SDP Objects:
     workflow     Interact with available workflow definitions
     deployment   Interact with deployments
     sbi          Interact with scheduling block instances
+    master       Interact with Tango master device
+    subarray     Interact with Tango subarray device
 
 Commands:
     list            List information of object from the Configuration DB

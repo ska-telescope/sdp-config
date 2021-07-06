@@ -40,6 +40,8 @@ SDP Objects:
 - workflow (workflow definition)
 - deployment
 - sbi (scheduling block instance)
+- master (Tango master device)
+- subarray (Tango subarray device)
 
 .. list-table::
    :widths: 5 5 5 5 5 5
@@ -54,13 +56,15 @@ SDP Objects:
    * - **list**
      - - list all pbs
        - list pbs for a certain date
-     - - list all workflow defintions
+     - - list all workflow definitions
        - list a workflow def of a specific type (batch or realtime)
      - list all deployments
      - list all sbis
      - - if **-a | --all**: list all the contents of the Config DB
        - if **-v | --values**: list keys with values (or just values)
        - if **--prefix**: list limited to this prefix (for testing purposes)
+       - if master, list the device entry if there is one
+       - if subarray, list all subarray device entries
    * - **get/watch**
      - - get the value of a single key
        - get the values of all pb-related keys for a single pb-id
@@ -73,7 +77,7 @@ SDP Objects:
      - create a key/value pair with prefix of /workflow
      - create a deployment of **given id, type, and parameters**
      - create a key/value pair with prefix of /sbi
-     -
+     - *Not implemented for Tango devices*
    * - **update/edit**
      - update/edit the **state** of a pb with a **given pb-id**
      - - update a given key with a given value
@@ -82,7 +86,8 @@ SDP Objects:
        - edit a given key
      - - update a given key with a given value
        - edit a given key
-     -
+     - - update a Tango device entry
+       - edit a Tango device entry
    * - **delete**
      - - delete all pbs (need confirmation)
        - delete all pb entries for a single pb-id
@@ -137,6 +142,8 @@ Usage
         workflow     Interact with available workflow definitions
         deployment   Interact with deployments
         sbi          Interact with scheduling block instances
+        master       Interact with Tango master device
+        subarray     Interact with Tango subarray device
 
     Commands:
         list            List information of object from the Configuration DB
@@ -159,7 +166,7 @@ Usage
         ska-sdp list (-a |--all) [options]
         ska-sdp list [options] pb [<date>]
         ska-sdp list [options] workflow [<type>]
-        ska-sdp list [options] (deployment|sbi)
+        ska-sdp list [options] (deployment|sbi|master|subarray)
         ska-sdp list (-h|--help)
 
     Arguments:
@@ -248,13 +255,18 @@ Usage
     Usage:
         ska-sdp update [options] (workflow|sbi|deployment) <key> <value>
         ska-sdp update [options] pb-state <pb-id> <value>
+        ska-sdp update [options] master <value>
+        ska-sdp update [options] subarray <array-id> <value>
         ska-sdp edit (workflow|sbi|deployment) <key>
         ska-sdp edit pb-state <pb-id>
+        ska-sdp edit master
+        ska-sdp edit subarray <array-id>
         ska-sdp (update|edit) (-h|--help)
 
     Arguments:
         <key>       Key within the Config DB. Cannot be a processing block related key.
         <pb-id>     Processing block id whose state is to be changed.
+        <array-id>  Subarray id (number)
         <value>     Value to update the key/pb state with.
 
     Options:
