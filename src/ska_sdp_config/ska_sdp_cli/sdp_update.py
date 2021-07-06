@@ -107,7 +107,7 @@ def cmd_edit(txn, key):
 
         # Start editor
         try:
-            subprocess.run((os.environ["EDITOR"], fname))
+            subprocess.run((os.environ["EDITOR"], fname), check=True)
         except KeyError as err:
             # if EDITOR env var is not set, a KeyError is raised
             raise EditorNotFoundError from err
