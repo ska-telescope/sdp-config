@@ -6,7 +6,7 @@ Install with pip
 
 .. code-block:: bash
 
-   pip --index-url https://nexus.engageska-portugal.pt/repository/pypi/simple --extra-index-url https://pypi.org/simple install ska-sdp-config
+   pip --index-url https://artefact.skao.int/repository/pypi-internal/simple --extra-index-url https://pypi.org/simple install ska-sdp-config
 
 
 Basic usage
@@ -18,10 +18,10 @@ moment). Location can be configured using the ``SDP_CONFIG_HOST`` and
 ``2379``, which should work with a local ``etcd`` started without any
 configuration.
 
-You can find ``etcd`` pre-built binaries, for Linux, Windows, and MacOS,
+You can find ``etcd`` pre-built binaries, for Linux, Windows, and macOS,
 here: https://github.com/etcd-io/etcd/releases.
 
-You can also use homebrew to install ``etcd`` on a MacOS:
+You can also use homebrew to install ``etcd`` on macOS:
 
 .. code-block:: bash
 

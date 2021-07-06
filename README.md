@@ -45,12 +45,12 @@ associated workflows.
 ## Command line
 
 This package also comes with a command line utility for easy access to
-configuration data. See documentation at: 
-[CLI for SDP](https://developer.skatelescope.org/projects/ska-sdp-config/en/latest/cli.html)
+configuration data. See documentation at:
+[CLI for SDP](https://developer.skao.int/projects/ska-sdp-config/en/latest/cli.html)
 
 ## Contribute to this repository
 
-We use [Black](https://github.com/psf/black) to keep the python code style in good shape. 
+We use [Black](https://github.com/psf/black) to keep the python code style in good shape.
 Please make sure you black-formatted your code before merging to master.
 
 The linting step in the CI pipeline checks that the code complies with black formatting style,
