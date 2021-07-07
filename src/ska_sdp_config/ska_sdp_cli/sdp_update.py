@@ -71,6 +71,7 @@ def cmd_update(txn, key, value):
     :param value: new value to update the key with
     """
     txn.raw.update(key, value)
+    LOG.info("%s updated.", key)
 
 
 def cmd_edit(txn, key):
@@ -163,5 +164,3 @@ def main(argv, config):
                     "(See 'ska-sdp edit -h'.)"
                 )
                 return
-
-    LOG.info("%s updated.", key)
