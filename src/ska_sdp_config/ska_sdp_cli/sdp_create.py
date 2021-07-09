@@ -1,12 +1,11 @@
 """
-Create a new, raw, key-value pair in the Configuration Database.
+Create SDP objects (deployment, workflow, sbi) in the Configuration Database.
 Create a processing block to run a workflow.
-Create a deployment.
 
 Usage:
     ska-sdp create [options] pb <workflow> [<parameters>]
-    ska-sdp create [options] deployment <deploy-id> <type> <parameters>
-    ska-sdp create [options] (workflow|sbi) <key> <value>
+    ska-sdp create [options] deployment <item-id> <type> <parameters>
+    ska-sdp create [options] (workflow|sbi) <item-id> <value>
     ska-sdp create (-h|--help)
 
 Arguments:
@@ -15,11 +14,8 @@ Arguments:
                         '{"key1": "value1", "key2": "value2"}'
                     For deployments, expected format:
                         '{"chart": <chart-name>, "values": <dict-of-values>}'
-    <deploy_id>     Id of the new deployment
+    <item-id>       Id of the new deployment, workflow or sbi
     <type>          Type of the new deployment (currently "helm" only)
-    Create general key-value pairs:
-    <key>           Key to be created in the Config DB.
-    <value>         Value belonging to that key.
 
 Options:
     -h, --help    Show this screen

@@ -210,14 +210,13 @@ Usage
 
     > ska-sdp create --help
 
-    Create a new, raw, key-value pair in the Configuration Database.
+    Create SDP objects (deployment, workflow, sbi) in the Configuration Database.
     Create a processing block to run a workflow.
-    Create a deployment.
 
     Usage:
         ska-sdp create [options] pb <workflow> [<parameters>]
-        ska-sdp create [options] deployment <deploy-id> <type> <parameters>
-        ska-sdp create [options] (workflow|sbi) <key> <value>
+        ska-sdp create [options] deployment <item-id> <type> <parameters>
+        ska-sdp create [options] (workflow|sbi) <item-id> <value>
         ska-sdp create (-h|--help)
 
     Arguments:
@@ -226,11 +225,8 @@ Usage
                             '{"key1": "value1", "key2": "value2"}'
                         For deployments, expected format:
                             '{"chart": <chart-name>, "values": <dict-of-values>}'
-        <deploy_id>     Id of the new deployment
+        <item-id>       Id of the new deployment, workflow or sbi
         <type>          Type of the new deployment (currently "helm" only)
-        Create general key-value pairs:
-        <key>           Key to be created in the Config DB.
-        <value>         Value belonging to that key.
 
     Options:
         -h, --help    Show this screen
@@ -253,20 +249,18 @@ Usage
     Can either update from CLI, or edit via a text editor.
 
     Usage:
-        ska-sdp update [options] (workflow|sbi|deployment) <key> <value>
-        ska-sdp update [options] pb-state <pb-id> <value>
+        ska-sdp update [options] (workflow|sbi|deployment) <item-id> <value>
+        ska-sdp update [options] pb-state <item-id> <value>
         ska-sdp update [options] master <value>
-        ska-sdp update [options] subarray <array-id> <value>
+        ska-sdp update [options] subarray <item-id> <value>
         ska-sdp edit (workflow|sbi|deployment) <key>
-        ska-sdp edit pb-state <pb-id>
+        ska-sdp edit pb-state <item-id>
         ska-sdp edit master
-        ska-sdp edit subarray <array-id>
+        ska-sdp edit subarray <item-id>
         ska-sdp (update|edit) (-h|--help)
 
     Arguments:
-        <key>       Key within the Config DB. Cannot be a processing block related key.
-        <pb-id>     Processing block id whose state is to be changed.
-        <array-id>  Subarray id (number)
+        <item-id>   id of the workflow, sbi, deployment, processing block or subarray
         <value>     Value to update the key/pb state with.
 
     Options:
@@ -297,12 +291,12 @@ Usage
 
     Usage:
         ska-sdp delete (-a|--all) [options] (pb|workflow|sbi|deployment|prefix)
-        ska-sdp delete [options] (pb|sbi|deployment) <id>
+        ska-sdp delete [options] (pb|sbi|deployment) <item-id>
         ska-sdp delete [options] workflow <workflow>
         ska-sdp delete (-h|--help)
 
     Arguments:
-        <id>        ID of the processing block, or deployment, or scheduling block instance
+        <item-id>   ID of the processing block, or deployment, or scheduling block instance
         <workflow>  Workflow definition to be deleted. Expected format: type:id:version
         prefix      Use this "SDP Object" when deleting with a non-object-specific, user-defined prefix
 

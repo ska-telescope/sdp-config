@@ -3,20 +3,18 @@ Update the value of a single key or processing block state.
 Can either update from CLI, or edit via a text editor.
 
 Usage:
-    ska-sdp update [options] (workflow|sbi|deployment) <key> <value>
-    ska-sdp update [options] pb-state <pb-id> <value>
+    ska-sdp update [options] (workflow|sbi|deployment) <item-id> <value>
+    ska-sdp update [options] pb-state <item-id> <value>
     ska-sdp update [options] master <value>
-    ska-sdp update [options] subarray <array-id> <value>
-    ska-sdp edit (workflow|sbi|deployment) <key>
-    ska-sdp edit pb-state <pb-id>
+    ska-sdp update [options] subarray <item-id> <value>
+    ska-sdp edit (workflow|sbi|deployment) <item-id>
+    ska-sdp edit pb-state <item-id>
     ska-sdp edit master
-    ska-sdp edit subarray <array-id>
+    ska-sdp edit subarray <item-id>
     ska-sdp (update|edit) (-h|--help)
 
 Arguments:
-    <key>       Key within the Config DB. Cannot be a processing block related key.
-    <pb-id>     Processing block id whose state is to be changed.
-    <array-id>  Subarray id (number)
+    <item-id>   id of the workflow, sbi, deployment, processing block or subarray
     <value>     Value to update the key/pb state with.
 
 Options:
@@ -86,24 +84,16 @@ def cmd_edit(txn, key):
     if val is None:
         raise KeyError(f"No match for {key}")
 
-    try:
-        # Attempt translation to YAML
-        val_dict = json.loads(val)
-        val_in = yaml.dump(val_dict)
-        have_yaml = True
-
-    except json.JSONDecodeError:
-        val_in = val
-        have_yaml = False
+    # Attempt translation to YAML
+    val_dict = json.loads(val)
+    val_in = yaml.dump(val_dict)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         # Write to temporary file. Put it in a temp directory to avoid re-opening a
         # file that hasn't been closed (can't do that on Windows).
-        suffix = ".yml" if have_yaml else ".dat"
-        fname = os.path.join(temp_dir, _clean_filename(key[1:]) + suffix)
+        fname = os.path.join(temp_dir, _clean_filename(key[1:]) + ".yml")
         with open(fname, "w") as file:
-            if have_yaml:
-                file.write(f"# Editing key {key}\n")
+            file.write(f"# Editing key {key}\n")
             file.write(val_in)
 
         # Start editor
@@ -116,8 +106,7 @@ def cmd_edit(txn, key):
         # Read new value in
         with open(fname) as tmp2:
             new_val = tmp2.read()
-        if have_yaml:
-            new_val = dict_to_json(yaml.safe_load(new_val))
+        new_val = dict_to_json(yaml.safe_load(new_val))
         os.remove(fname)
 
     # Apply update
