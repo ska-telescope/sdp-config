@@ -99,7 +99,7 @@ def main(argv, config):
                 path = f"{path}/workflow/{args['<workflow>']}"
 
             else:
-                path = f"{path}/{sdp_object}/{args['<id>']}"
+                path = f"{path}/{sdp_object}/{args['<item-id>']}"
 
             break  # only one can be true, or none
 

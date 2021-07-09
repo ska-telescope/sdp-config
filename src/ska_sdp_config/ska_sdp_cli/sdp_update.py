@@ -126,13 +126,13 @@ def main(argv, config):
     }
 
     if args["pb-state"]:
-        key = f"/pb/{args['<pb-id>']}/state"
+        key = f"/pb/{args['<item-id>']}/state"
     elif args["master"]:
         key = "/master"
     elif args["subarray"]:
-        key = f"/subarray/{args['<array-id>'].zfill(2)}"
+        key = f"/subarray/{args['<item-id>'].zfill(2)}"
     else:
-        key = args["<key>"]
+        key = args["<item-id>"]
 
     for sdp_object, exists in object_dict.items():
         if exists:

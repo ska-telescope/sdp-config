@@ -108,9 +108,9 @@ def main(argv, config):
 
     if args["deployment"]:
         for txn in config.txn():
-            cmd_deploy(txn, args["<type>"], args["<deploy-id>"], args["<parameters>"])
+            cmd_deploy(txn, args["<type>"], args["<item-id>"], args["<parameters>"])
 
-        LOG.info("Deployment created with id: %s", args["<deploy-id>"])
+        LOG.info("Deployment created with id: %s", args["<item-id>"])
         return
 
     path = "/"
@@ -119,7 +119,7 @@ def main(argv, config):
             path = path + sdp_object
             break  # only one can be true, or none
 
-    path = path + "/" + args["<key>"]
+    path = path + "/" + args["<item-id>"]
 
     for txn in config.txn():
         cmd_create(txn, path, args["<value>"])
