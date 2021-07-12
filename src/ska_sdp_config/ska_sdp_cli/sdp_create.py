@@ -1,12 +1,11 @@
 """
-Create a new, raw, key-value pair in the Configuration Database.
+Create SDP objects (deployment, workflow, sbi) in the Configuration Database.
 Create a processing block to run a workflow.
-Create a deployment.
 
 Usage:
     ska-sdp create [options] pb <workflow> [<parameters>]
-    ska-sdp create [options] deployment <deploy-id> <type> <parameters>
-    ska-sdp create [options] (workflow|sbi) <key> <value>
+    ska-sdp create [options] deployment <item-id> <type> <parameters>
+    ska-sdp create [options] (workflow|sbi) <item-id> <value>
     ska-sdp create (-h|--help)
 
 Arguments:
@@ -15,11 +14,8 @@ Arguments:
                         '{"key1": "value1", "key2": "value2"}'
                     For deployments, expected format:
                         '{"chart": <chart-name>, "values": <dict-of-values>}'
-    <deploy_id>     Id of the new deployment
+    <item-id>       Id of the new deployment, workflow or sbi
     <type>          Type of the new deployment (currently "helm" only)
-    Create general key-value pairs:
-    <key>           Key to be created in the Config DB.
-    <value>         Value belonging to that key.
 
 Options:
     -h, --help    Show this screen
@@ -112,9 +108,9 @@ def main(argv, config):
 
     if args["deployment"]:
         for txn in config.txn():
-            cmd_deploy(txn, args["<type>"], args["<deploy-id>"], args["<parameters>"])
+            cmd_deploy(txn, args["<type>"], args["<item-id>"], args["<parameters>"])
 
-        LOG.info("Deployment created with id: %s", args["<deploy-id>"])
+        LOG.info("Deployment created with id: %s", args["<item-id>"])
         return
 
     path = "/"
@@ -123,7 +119,7 @@ def main(argv, config):
             path = path + sdp_object
             break  # only one can be true, or none
 
-    path = path + "/" + args["<key>"]
+    path = path + "/" + args["<item-id>"]
 
     for txn in config.txn():
         cmd_create(txn, path, args["<value>"])

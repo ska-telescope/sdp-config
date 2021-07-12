@@ -40,6 +40,8 @@ SDP Objects:
 - workflow (workflow definition)
 - deployment
 - sbi (scheduling block instance)
+- master (Tango master device)
+- subarray (Tango subarray device)
 
 .. list-table::
    :widths: 5 5 5 5 5 5
@@ -54,13 +56,15 @@ SDP Objects:
    * - **list**
      - - list all pbs
        - list pbs for a certain date
-     - - list all workflow defintions
+     - - list all workflow definitions
        - list a workflow def of a specific type (batch or realtime)
      - list all deployments
      - list all sbis
      - - if **-a | --all**: list all the contents of the Config DB
        - if **-v | --values**: list keys with values (or just values)
        - if **--prefix**: list limited to this prefix (for testing purposes)
+       - if master, list the device entry if there is one
+       - if subarray, list all subarray device entries
    * - **get/watch**
      - - get the value of a single key
        - get the values of all pb-related keys for a single pb-id
@@ -73,7 +77,7 @@ SDP Objects:
      - create a key/value pair with prefix of /workflow
      - create a deployment of **given id, type, and parameters**
      - create a key/value pair with prefix of /sbi
-     -
+     - *Not implemented for Tango devices*
    * - **update/edit**
      - update/edit the **state** of a pb with a **given pb-id**
      - - update a given key with a given value
@@ -82,7 +86,8 @@ SDP Objects:
        - edit a given key
      - - update a given key with a given value
        - edit a given key
-     -
+     - - update a Tango device entry
+       - edit a Tango device entry
    * - **delete**
      - - delete all pbs (need confirmation)
        - delete all pb entries for a single pb-id
@@ -137,6 +142,8 @@ Usage
         workflow     Interact with available workflow definitions
         deployment   Interact with deployments
         sbi          Interact with scheduling block instances
+        master       Interact with Tango master device
+        subarray     Interact with Tango subarray device
 
     Commands:
         list            List information of object from the Configuration DB
@@ -159,7 +166,7 @@ Usage
         ska-sdp list (-a |--all) [options]
         ska-sdp list [options] pb [<date>]
         ska-sdp list [options] workflow [<type>]
-        ska-sdp list [options] (deployment|sbi)
+        ska-sdp list [options] (deployment|sbi|master|subarray)
         ska-sdp list (-h|--help)
 
     Arguments:
@@ -203,14 +210,13 @@ Usage
 
     > ska-sdp create --help
 
-    Create a new, raw, key-value pair in the Configuration Database.
+    Create SDP objects (deployment, workflow, sbi) in the Configuration Database.
     Create a processing block to run a workflow.
-    Create a deployment.
 
     Usage:
         ska-sdp create [options] pb <workflow> [<parameters>]
-        ska-sdp create [options] deployment <deploy-id> <type> <parameters>
-        ska-sdp create [options] (workflow|sbi) <key> <value>
+        ska-sdp create [options] deployment <item-id> <type> <parameters>
+        ska-sdp create [options] (workflow|sbi) <item-id> <value>
         ska-sdp create (-h|--help)
 
     Arguments:
@@ -219,11 +225,8 @@ Usage
                             '{"key1": "value1", "key2": "value2"}'
                         For deployments, expected format:
                             '{"chart": <chart-name>, "values": <dict-of-values>}'
-        <deploy_id>     Id of the new deployment
+        <item-id>       Id of the new deployment, workflow or sbi
         <type>          Type of the new deployment (currently "helm" only)
-        Create general key-value pairs:
-        <key>           Key to be created in the Config DB.
-        <value>         Value belonging to that key.
 
     Options:
         -h, --help    Show this screen
@@ -246,15 +249,18 @@ Usage
     Can either update from CLI, or edit via a text editor.
 
     Usage:
-        ska-sdp update [options] (workflow|sbi|deployment) <key> <value>
-        ska-sdp update [options] pb-state <pb-id> <value>
+        ska-sdp update [options] (workflow|sbi|deployment) <item-id> <value>
+        ska-sdp update [options] pb-state <item-id> <value>
+        ska-sdp update [options] master <value>
+        ska-sdp update [options] subarray <item-id> <value>
         ska-sdp edit (workflow|sbi|deployment) <key>
-        ska-sdp edit pb-state <pb-id>
+        ska-sdp edit pb-state <item-id>
+        ska-sdp edit master
+        ska-sdp edit subarray <item-id>
         ska-sdp (update|edit) (-h|--help)
 
     Arguments:
-        <key>       Key within the Config DB. Cannot be a processing block related key.
-        <pb-id>     Processing block id whose state is to be changed.
+        <item-id>   id of the workflow, sbi, deployment, processing block or subarray
         <value>     Value to update the key/pb state with.
 
     Options:
@@ -285,12 +291,12 @@ Usage
 
     Usage:
         ska-sdp delete (-a|--all) [options] (pb|workflow|sbi|deployment|prefix)
-        ska-sdp delete [options] (pb|sbi|deployment) <id>
+        ska-sdp delete [options] (pb|sbi|deployment) <item-id>
         ska-sdp delete [options] workflow <workflow>
         ska-sdp delete (-h|--help)
 
     Arguments:
-        <id>        ID of the processing block, or deployment, or scheduling block instance
+        <item-id>   ID of the processing block, or deployment, or scheduling block instance
         <workflow>  Workflow definition to be deleted. Expected format: type:id:version
         prefix      Use this "SDP Object" when deleting with a non-object-specific, user-defined prefix
 

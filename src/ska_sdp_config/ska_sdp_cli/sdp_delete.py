@@ -3,12 +3,12 @@ Delete a key from the Configuration Database.
 
 Usage:
     ska-sdp delete (-a|--all) [options] (pb|workflow|sbi|deployment|prefix)
-    ska-sdp delete [options] (pb|sbi|deployment) <id>
+    ska-sdp delete [options] (pb|sbi|deployment) <item-id>
     ska-sdp delete [options] workflow <workflow>
     ska-sdp delete (-h|--help)
 
 Arguments:
-    <id>        ID of the processing block, or deployment, or scheduling block instance
+    <item-id>   ID of the processing block, or deployment, or scheduling block instance
     <workflow>  Workflow definition to be deleted. Expected format: type:id:version
     prefix      Use this "SDP Object" when deleting with a non-object-specific, user-defined prefix
 
@@ -99,7 +99,7 @@ def main(argv, config):
                 path = f"{path}/workflow/{args['<workflow>']}"
 
             else:
-                path = f"{path}/{sdp_object}/{args['<id>']}"
+                path = f"{path}/{sdp_object}/{args['<item-id>']}"
 
             break  # only one can be true, or none
 

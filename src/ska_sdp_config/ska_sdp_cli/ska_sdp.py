@@ -11,6 +11,8 @@ SDP Objects:
     workflow     Interact with available workflow definitions
     deployment   Interact with deployments
     sbi          Interact with scheduling block instances
+    master       Interact with Tango master device
+    subarray     Interact with Tango subarray device
 
 Commands:
     list            List information of object from the Configuration DB
@@ -44,8 +46,11 @@ LOG.addHandler(logging.StreamHandler(sys.stdout))
 COMMAND = "COMMAND"
 
 
-def main(argv):
+def main(argv=None):
     """Run ska-sdp."""
+    if argv is None:
+        argv = sys.argv[1:]
+
     args = docopt(__doc__, argv=argv, options_first=True)
     cfg = config.Config()
 
@@ -72,3 +77,7 @@ def main(argv):
             "Command '%s' is not supported. Run 'ska-sdp --help' to view usage.",
             args[COMMAND],
         )
+
+
+if __name__ == "__main__":
+    main()

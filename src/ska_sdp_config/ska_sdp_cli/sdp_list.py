@@ -5,7 +5,7 @@ Usage:
     ska-sdp list (-a |--all) [options]
     ska-sdp list [options] pb [<date>]
     ska-sdp list [options] workflow [<type>]
-    ska-sdp list [options] (deployment|sbi)
+    ska-sdp list [options] (deployment|sbi|master|subarray)
     ska-sdp list (-h|--help)
 
 Arguments:
@@ -96,6 +96,8 @@ def main(argv, config):
         "workflow": args["workflow"],
         "deploy": args["deployment"],
         "sb": args["sbi"],
+        "master": args["master"],
+        "subarray": args["subarray"],
     }
 
     if args["--prefix"]:
