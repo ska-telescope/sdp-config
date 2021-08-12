@@ -404,6 +404,36 @@ class Transaction:  # pylint: disable=too-many-public-methods
         for key in self._txn.list_keys(deploy_path, recurse=5):
             self._txn.delete(key)
 
+    def get_deployment_state(self, deploy_id: str) -> dict:
+        """
+        Get the current Deployment state.
+
+        :param deploy_id: Deployment ID
+        :returns: Deployment state, or None if not present
+        """
+        state = self._get(self._paths["deploy"] + deploy_id + "/state")
+        if state is None:
+            return None
+        return state
+
+    def create_deployment_state(self, deploy_id: str, state: dict):
+        """
+        Create Deployment state.
+
+        :param deploy_id: Deployment ID
+        :param state: Deployment state to create
+        """
+        self._create(self._paths["deploy"] + deploy_id + "/state", state)
+
+    def update_deployment_state(self, deploy_id: str, state: dict):
+        """
+        Update Deploymentstate.
+
+        :param deploy_id: Deployment ID
+        :param state: Deployment state to update
+        """
+        self._update(self._paths["deploy"] + deploy_id + "/state", state)
+
     def list_scheduling_blocks(self, prefix=""):
         """Query scheduling block IDs from the configuration.
 
